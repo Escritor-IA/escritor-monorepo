@@ -16,6 +16,9 @@ class User(AbstractUser):
     profile = models.CharField(max_length=20, choices=PROFILE_CHOICES, default="beginner")
     credits_balance = models.IntegerField(default=10)
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default="free")
+    is_email_verified = models.BooleanField(default=False)
+    otp_code = models.CharField(max_length=6, null=True, blank=True)
+    otp_expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Usuário"

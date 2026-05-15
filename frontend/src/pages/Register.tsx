@@ -23,7 +23,7 @@ export function Register() {
     setLoading(true);
     try {
       await authApi.register(form);
-      navigate("/login", { state: { message: "Conta criada com sucesso! Faça login." } });
+      navigate("/verify-email", { state: { email: form.email } });
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       if (data) {

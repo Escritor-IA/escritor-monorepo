@@ -14,4 +14,10 @@ export const authApi = {
     client.post<{ access: string; refresh: string; user: User }>("/auth/login/", data),
 
   me: () => client.get<User>("/auth/me/"),
+
+  verifyEmail: (data: { email: string; otp_code: string }) =>
+    client.post<{ detail: string }>("/auth/verify-email/", data),
+
+  resendOtp: (data: { email: string }) =>
+    client.post<{ detail: string }>("/auth/resend-otp/", data),
 };

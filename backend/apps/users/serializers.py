@@ -1,8 +1,14 @@
+from datetime import timedelta
+
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+from .utils import generate_otp, send_otp_email
+
+OTP_EXPIRY_MINUTES = 15
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -19,12 +25,73 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        otp = generate_otp()
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
             profile=validated_data.get("profile", "beginner"),
+            is_email_verified=False,
+            otp_code=otp,
+            otp_expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
         )
+        send_otp_email(user.username, user.email, otp)
+        return user
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp_code = serializers.CharField(max_length=6)
+
+    def validate(self, attrs):
+        try:
+            user = User.objects.get(email=attrs["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "Usuário não encontrado."})
+
+        if user.is_email_verified:
+            raise serializers.ValidationError({"email": "Email já verificado."})
+
+        if user.otp_code != attrs["otp_code"]:
+            raise serializers.ValidationError({"otp_code": "Código inválido."})
+
+        if not user.otp_expires_at or timezone.now() > user.otp_expires_at:
+            raise serializers.ValidationError({"otp_code": "Código expirado. Solicite um novo."})
+
+        attrs["user"] = user
+        return attrs
+
+    def save(self):
+        user = self.validated_data["user"]
+        user.is_email_verified = True
+        user.otp_code = None
+        user.otp_expires_at = None
+        user.save(update_fields=["is_email_verified", "otp_code", "otp_expires_at"])
+        return user
+
+
+class ResendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs):
+        try:
+            user = User.objects.get(email=attrs["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "Usuário não encontrado."})
+
+        if user.is_email_verified:
+            raise serializers.ValidationError({"email": "Email já verificado."})
+
+        attrs["user"] = user
+        return attrs
+
+    def save(self):
+        user = self.validated_data["user"]
+        otp = generate_otp()
+        user.otp_code = otp
+        user.otp_expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        user.save(update_fields=["otp_code", "otp_expires_at"])
+        send_otp_email(user.username ,user.email, otp)
         return user
 
 
@@ -38,5 +105,9 @@ class UserSerializer(serializers.ModelSerializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
+        if not self.user.is_email_verified:
+            raise serializers.ValidationError(
+                {"email": "Verifique seu email antes de fazer login."}
+            )
         data["user"] = UserSerializer(self.user).data
         return data
