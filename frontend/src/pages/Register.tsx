@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { AuthShell } from "./Login";
 
 export function Register() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export function Register() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+
+  const valid = form.username && form.email && form.password.length >= 6 && form.password_confirm && agreed;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,102 +43,89 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-700">Escritor.AI</h1>
-          <p className="text-gray-500 mt-2">Crie sua conta gratuitamente</p>
-        </div>
+    <AuthShell
+      eyebrow="NOVO MANUSCRITO"
+      title={<>Comece a escrever<br /><em style={{ fontStyle: "italic" }}>em três páginas.</em></>}
+      sub="Você ganha 5 créditos no cadastro para experimentar as análises."
+    >
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Input
+          label="Nome / Usuário"
+          placeholder="Como deseja ser chamado(a)"
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          error={errors.username}
+          autoFocus
+          required
+        />
+        <Input
+          label="E-mail"
+          type="email"
+          placeholder="voce@exemplo.com"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          error={errors.email}
+          required
+        />
+        <Input
+          label="Senha"
+          type="password"
+          placeholder="••••••••"
+          hint="Mínimo 6 caracteres."
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          error={errors.password}
+          required
+        />
+        <Input
+          label="Confirmar senha"
+          type="password"
+          placeholder="••••••••"
+          value={form.password_confirm}
+          onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
+          error={errors.password_confirm}
+          required
+        />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Criar conta</h2>
+        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            style={{ accentColor: "var(--ink)", marginTop: 3 }}
+          />
+          <span>
+            Concordo com os{" "}
+            <span style={{ color: "var(--green)" }}>Termos</span>{" "}
+            e a{" "}
+            <span style={{ color: "var(--green)" }}>Política de Privacidade</span>.
+          </span>
+        </label>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Usuário"
-              type="text"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              error={errors.username}
-              required
-              autoFocus
-            />
-            <Input
-              label="E-mail"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              error={errors.email}
-              required
-            />
-            <Input
-              label="Senha"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              error={errors.password}
-              required
-            />
-            <Input
-              label="Confirmar senha"
-              type="password"
-              value={form.password_confirm}
-              onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
-              error={errors.password_confirm}
-              required
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Perfil de escritor
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "beginner", label: "Iniciante", desc: "Estou começando" },
-                  { value: "experienced", label: "Experiente", desc: "Já publiquei obras" },
-                ].map(({ value, label, desc }) => (
-                  <label
-                    key={value}
-                    className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-colors ${
-                      form.profile === value
-                        ? "border-brand-500 bg-brand-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="profile"
-                      value={value}
-                      checked={form.profile === value}
-                      onChange={() => setForm({ ...form, profile: value })}
-                      className="sr-only"
-                    />
-                    <span className="text-sm font-medium text-gray-900">{label}</span>
-                    <span className="text-xs text-gray-500">{desc}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {errors.non_field_errors && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                {errors.non_field_errors}
-              </p>
-            )}
-
-            <Button type="submit" loading={loading} className="w-full" size="lg">
-              Criar conta
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Já tem conta?{" "}
-            <Link to="/login" className="text-brand-600 font-medium hover:underline">
-              Faça login
-            </Link>
+        {errors.non_field_errors && (
+          <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
+            {errors.non_field_errors}
           </p>
-        </div>
+        )}
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          loading={loading}
+          disabled={!valid || loading}
+          style={{ width: "100%", marginTop: 8, opacity: valid ? 1 : 0.55 }}
+        >
+          {loading ? "Criando conta…" : "Criar minha conta"}
+        </Button>
+      </form>
+
+      <div style={{ marginTop: 22, textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
+        Já tem conta?{" "}
+        <Link to="/login" style={{ color: "var(--green)", fontWeight: 500 }}>
+          Entrar
+        </Link>
       </div>
-    </div>
+    </AuthShell>
   );
 }

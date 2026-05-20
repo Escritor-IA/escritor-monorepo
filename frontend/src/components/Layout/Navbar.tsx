@@ -11,38 +11,45 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="text-brand-600 font-bold text-xl">Escritor</span>
-            <span className="bg-brand-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-              .AI
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            {user && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <svg className="h-4 w-4 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2a6 6 0 100 12A6 6 0 0010 2zm0 10a4 4 0 110-8 4 4 0 010 8z" />
-                </svg>
-                <span className="font-medium text-brand-600">{user.credits_balance}</span>
-                <span>créditos</span>
-              </div>
-            )}
-
-            {user && (
-              <span className="text-sm text-gray-500 hidden sm:block">{user.username}</span>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Sair
-            </button>
+    <nav className="topnav">
+      <div className="topnav-inner">
+        <Link to="/dashboard" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="logo">
+            <span>Escritor</span><span className="dot">.ai</span>
           </div>
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {user && (
+            <div className="credits" title="Créditos disponíveis">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <span className="num">{user.credits_balance}</span>
+              <span>créditos</span>
+            </div>
+          )}
+
+          {user && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-2)" }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: "var(--ink)", color: "var(--paper)",
+                display: "grid", placeItems: "center",
+                fontSize: 11, fontWeight: 600, letterSpacing: 0.5,
+              }}>
+                {user.username.slice(0, 2).toUpperCase()}
+              </div>
+              <span>{user.username}</span>
+            </div>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="btn btn-ghost btn-sm"
+          >
+            Sair
+          </button>
         </div>
       </div>
     </nav>

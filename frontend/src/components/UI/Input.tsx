@@ -1,36 +1,51 @@
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, TextareaHTMLAttributes, SelectHTMLAttributes, ReactNode } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  hint?: string;
 }
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  hint?: string;
 }
 
-const baseClass =
-  "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 " +
-  "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 " +
-  "disabled:bg-gray-50 disabled:text-gray-500";
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  children: ReactNode;
+}
 
-export function Input({ label, error, className = "", ...props }: InputProps) {
+export function Input({ label, error, hint, className = "", ...props }: InputProps) {
   return (
-    <div>
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-      <input {...props} className={`${baseClass} ${className}`} />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    <div className="field">
+      {label && <span className="field-label">{label}</span>}
+      <input {...props} className={`input ${className}`} />
+      {hint && <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{hint}</span>}
+      {error && <span style={{ fontSize: 12, color: "var(--red)" }}>{error}</span>}
     </div>
   );
 }
 
-export function Textarea({ label, error, className = "", ...props }: TextareaProps) {
+export function Textarea({ label, error, hint, className = "", ...props }: TextareaProps) {
   return (
-    <div>
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-      <textarea {...props} className={`${baseClass} ${className}`} />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    <div className="field">
+      {label && <span className="field-label">{label}</span>}
+      <textarea {...props} className={`textarea ${className}`} />
+      {hint && <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{hint}</span>}
+      {error && <span style={{ fontSize: 12, color: "var(--red)" }}>{error}</span>}
+    </div>
+  );
+}
+
+export function Select({ label, error, children, className = "", ...props }: SelectProps) {
+  return (
+    <div className="field">
+      {label && <span className="field-label">{label}</span>}
+      <select {...props} className={`select-field ${className}`}>{children}</select>
+      {error && <span style={{ fontSize: 12, color: "var(--red)" }}>{error}</span>}
     </div>
   );
 }
