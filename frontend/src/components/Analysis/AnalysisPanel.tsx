@@ -155,8 +155,8 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
     (!requiresChapter || !!chapter) &&
     (!requiresSelection || !!selectedText) &&
     (selectedType !== "reader_simulation"
-      ? user.credits_balance >= cost
-      : selectedProfiles.length > 0 && user.credits_balance >= cost);
+      ? user.user_plan.credits >= cost
+      : selectedProfiles.length > 0 && user.user_plan.credits >= cost);
 
   useEffect(() => {
     if (result) {
@@ -358,12 +358,12 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
           Selecione um capítulo para usar este tipo de análise.
         </div>
       )}
-      {user && selectedType !== "reader_simulation" && user.credits_balance < cost && (
+      {user && selectedType !== "reader_simulation" && user.user_plan.credits < cost && (
         <div style={{ fontSize: 12, color: "var(--red)", textAlign: "center" }}>
           Créditos insuficientes para esta análise.
         </div>
       )}
-      {user && selectedType === "reader_simulation" && selectedProfiles.length > 0 && user.credits_balance < cost && (
+      {user && selectedType === "reader_simulation" && selectedProfiles.length > 0 && user.user_plan.credits < cost && (
         <div style={{ fontSize: 12, color: "var(--red)", textAlign: "center" }}>
           Créditos insuficientes ({cost} necessários).
         </div>

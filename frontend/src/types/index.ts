@@ -1,9 +1,17 @@
+export interface UserPlan {
+  plan: "free" | "basic" | "premium";
+  credits: number;
+  billing_cycle: "monthly" | "annual" | null;
+  expires_at: string | null;
+}
+
 export interface User {
   id: string;
   username: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  credits_balance: number;
-  plan: "free" | "basic" | "premium";
+  user_plan: UserPlan;
   date_joined: string;
 }
 

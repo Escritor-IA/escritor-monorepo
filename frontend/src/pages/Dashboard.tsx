@@ -106,7 +106,7 @@ export function Dashboard() {
           </h1>
           <p style={{ marginTop: 12, color: "var(--ink-3)", fontSize: 15 }}>
             Você tem{" "}
-            <strong style={{ color: "var(--green)" }}>{user?.credits_balance ?? 0} créditos</strong>{" "}
+            <strong style={{ color: "var(--green)" }}>{user?.user_plan?.credits ?? 0} créditos</strong>{" "}
             disponíveis ·{" "}
             <span>{totals.chapters} capítulos</span>
           </p>

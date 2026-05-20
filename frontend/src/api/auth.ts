@@ -4,9 +4,12 @@ import type { User } from "@/types";
 export const authApi = {
   register: (data: {
     username: string;
+    first_name: string;
+    last_name: string;
     email: string;
     password: string;
     password_confirm: string;
+    plan: "free" | "basic" | "premium";
   }) => client.post<User>("/auth/register/", data),
 
   login: (data: { username: string; password: string }) =>
@@ -19,4 +22,6 @@ export const authApi = {
 
   resendOtp: (data: { email: string }) =>
     client.post<{ detail: string }>("/auth/resend-otp/", data),
+
+  deleteAccount: () => client.delete("/auth/me/delete/"),
 };

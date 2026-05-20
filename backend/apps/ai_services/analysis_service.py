@@ -59,8 +59,8 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
     else:
         cost = CREDIT_COSTS.get(analysis_type, 1)
 
-    if user.credits_balance < cost:
-        raise ValueError(f"Créditos insuficientes. Necessário: {cost}, disponível: {user.credits_balance}.")
+    if user.user_plan.credits < cost:
+        raise ValueError(f"Créditos insuficientes. Necessário: {cost}, disponível: {user.user_plan.credits}.")
 
     genres = project.genres
     model = os.environ.get("GROQ_MODEL", GROQ_MODEL)
@@ -115,10 +115,10 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
             credits_consumed=cost,
             ai_model=model,
         )
-        user.credits_balance -= cost
-        user.save(update_fields=["credits_balance"])
+        user.user_plan.credits -= cost
+        user.user_plan.save(update_fields=["credits"])
         logger.info("Analysis reader_simulation created for project %s, profiles=%s, %d credits deducted", project.pk, profiles, cost)
-        return {"analysis": analysis, "credits_remaining": user.credits_balance}
+        return {"analysis": analysis, "credits_remaining": user.user_plan.credits}
 
     elif analysis_type == "creative_suggestion":
         if not chapter:
@@ -139,12 +139,12 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
         ai_model=model,
     )
 
-    user.credits_balance -= cost
-    user.save(update_fields=["credits_balance"])
+    user.user_plan.credits -= cost
+    user.user_plan.save(update_fields=["credits"])
 
     logger.info("Analysis %s created for project %s, %d credits deducted", analysis_type, project.pk, cost)
 
     return {
         "analysis": analysis,
-        "credits_remaining": user.credits_balance,
+        "credits_remaining": user.user_plan.credits,
     }

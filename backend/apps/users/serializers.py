@@ -5,19 +5,27 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User
+from .models import User, UserPlan
 from .utils import generate_otp, send_otp_email
 
 OTP_EXPIRY_MINUTES = 15
 
 
+PLAN_INITIAL_CREDITS = {
+    "free": 10,
+    "basic": 60,
+    "premium": 150,
+}
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
+    plan = serializers.ChoiceField(choices=["free", "basic", "premium"], default="free", write_only=True)
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "password", "password_confirm")
+        fields = ("id", "username", "first_name", "last_name", "email", "password", "password_confirm", "plan")
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("password_confirm"):
@@ -25,15 +33,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        plan = validated_data.pop("plan", "free")
         otp = generate_otp()
         user = User.objects.create_user(
             username=validated_data["username"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
             email=validated_data["email"],
             password=validated_data["password"],
             is_email_verified=False,
             otp_code=otp,
             otp_expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
         )
+        UserPlan.objects.create(user=user, plan=plan, credits=PLAN_INITIAL_CREDITS[plan])
         send_otp_email(user.username, user.email, otp)
         return user
 
@@ -94,11 +106,20 @@ class ResendOtpSerializer(serializers.Serializer):
         return user
 
 
+class UserPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPlan
+        fields = ("plan", "credits", "billing_cycle", "expires_at")
+        read_only_fields = ("plan", "credits", "billing_cycle", "expires_at")
+
+
 class UserSerializer(serializers.ModelSerializer):
+    user_plan = UserPlanSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ("id", "username", "email", "credits_balance", "plan", "date_joined")
-        read_only_fields = ("id", "credits_balance", "plan", "date_joined")
+        fields = ("id", "username", "first_name", "last_name", "email", "user_plan", "date_joined")
+        read_only_fields = ("id", "user_plan", "date_joined")
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

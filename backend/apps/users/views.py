@@ -48,3 +48,9 @@ class ResendOtpView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Novo código enviado para seu email."}, status=status.HTTP_200_OK)
+
+
+class DeleteAccountView(APIView):
+    def delete(self, request):
+        request.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
