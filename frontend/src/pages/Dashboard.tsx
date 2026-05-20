@@ -2,6 +2,11 @@ import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Project, ProjectGenre, ProjectStatus } from "@/types";
 import { GENRE_LABELS } from "@/types";
+
+function formatGenres(genres: string[]): string {
+  if (!genres.length) return "Sem gênero";
+  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ");
+}
 import { projectsApi } from "@/api/projects";
 import { Layout } from "@/components/Layout/Layout";
 import { Button } from "@/components/UI/Button";
@@ -23,7 +28,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 const DEFAULT_FORM = {
   title: "",
-  genre: "fantasy" as ProjectGenre,
+  genres: [] as string[],
   synopsis: "",
   status: "in_progress" as ProjectStatus,
 };
@@ -41,7 +46,8 @@ export function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [customGenre, setCustomGenre] = useState("");
 
   useEffect(() => {
     projectsApi.list().then(({ data }) => {
@@ -66,6 +72,7 @@ export function Dashboard() {
       setProjects((prev) => [data, ...prev]);
       setModalOpen(false);
       setForm(DEFAULT_FORM);
+      setCustomGenre("");
     } finally {
       setSaving(false);
     }
@@ -177,7 +184,7 @@ export function Dashboard() {
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <div className="eyebrow" style={{ fontSize: 10 }}>{GENRE_LABELS[project.genre]}</div>
+                  <div className="eyebrow" style={{ fontSize: 10 }}>{formatGenres(project.genres)}</div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
                     style={{
@@ -267,7 +274,7 @@ export function Dashboard() {
       {/* New project modal */}
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setForm(DEFAULT_FORM); setCustomGenre(""); }}
         title="Novo projeto"
         footer={
           <>
@@ -288,14 +295,77 @@ export function Dashboard() {
             required
           />
           <Select
-            label="Gênero literário"
-            value={form.genre}
-            onChange={(e) => setForm({ ...form, genre: e.target.value as ProjectGenre })}
+            label="Gênero(s) literário(s)"
+            value=""
+            onChange={(e) => {
+              const val = e.target.value;
+              if (!val || form.genres.includes(val)) return;
+              setForm({ ...form, genres: [...form.genres, val] });
+            }}
           >
+            <option value="" disabled>Selecione um gênero…</option>
             {(Object.entries(GENRE_LABELS) as [ProjectGenre, string][]).map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
+              <option key={v} value={v} disabled={form.genres.includes(v)}>
+                {form.genres.includes(v) ? `✓ ${l}` : l}
+              </option>
             ))}
           </Select>
+          {form.genres.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: -6 }}>
+              {form.genres.map((g) => (
+                <span
+                  key={g}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                    background: "var(--card)", border: "1px solid var(--card-edge)",
+                    borderRadius: 999, padding: "2px 10px", fontSize: 12, color: "var(--ink-2)",
+                  }}
+                >
+                  {GENRE_LABELS[g as ProjectGenre] ?? g}
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, genres: form.genres.filter((x) => x !== g) })}
+                    style={{ color: "var(--ink-4)", lineHeight: 1, padding: 0 }}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          {form.genres.includes("other") && (
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <Input
+                label="Temas personalizados"
+                placeholder="Ex: Steampunk, Distopia…"
+                value={customGenre}
+                onChange={(e) => setCustomGenre(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  const trimmed = customGenre.trim();
+                  if (trimmed && !form.genres.includes(trimmed)) {
+                    setForm({ ...form, genres: [...form.genres, trimmed] });
+                  }
+                  setCustomGenre("");
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                style={{ flexShrink: 0, height: 40, padding: "0 14px" }}
+                onClick={() => {
+                  const trimmed = customGenre.trim();
+                  if (trimmed && !form.genres.includes(trimmed)) {
+                    setForm({ ...form, genres: [...form.genres, trimmed] });
+                  }
+                  setCustomGenre("");
+                }}
+              >
+                Adicionar
+              </Button>
+            </div>
+          )}
           <Textarea
             label="Sinopse (opcional)"
             rows={3}

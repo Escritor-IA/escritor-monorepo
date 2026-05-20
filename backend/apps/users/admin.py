@@ -5,7 +5,7 @@ from .models import User
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ("username", "email", "profile", "credits_balance", "plan", "is_staff")
+    list_display = ("username", "email", "credits_balance", "plan", "is_staff")
     fieldsets = UserAdmin.fieldsets + (
-        ("Escritor.AI", {"fields": ("profile", "credits_balance", "plan")}),
+        ("Escritor.AI", {"fields": ("credits_balance", "plan")}),
     )

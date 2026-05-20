@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from pgvector.django import VectorField
 
@@ -9,17 +11,19 @@ class Analysis(models.Model):
     ANALYSIS_TYPES = [
         ("local", "Análise Local"),
         ("local_context", "Análise Local com Contexto"),
-        ("general", "Análise Geral"),
+        ("general_context", "Análise Geral com Contexto"),
         ("total", "Análise Total"),
         ("reader_simulation", "Simulação de Leitores"),
         ("creative_suggestion", "Sugestão Criativa"),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="analyses")
     chapter = models.ForeignKey(
         Chapter, on_delete=models.SET_NULL, related_name="analyses", null=True, blank=True
     )
     analysis_type = models.CharField(max_length=25, choices=ANALYSIS_TYPES)
+    reader_profiles = models.JSONField(default=list, blank=True)
     content = models.TextField()
     credits_consumed = models.PositiveIntegerField(default=1)
     ai_model = models.CharField(max_length=100)
@@ -35,6 +39,7 @@ class Analysis(models.Model):
 
 
 class ContextVector(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="vectors")
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="vectors")
     text_excerpt = models.TextField()

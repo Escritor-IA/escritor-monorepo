@@ -68,7 +68,16 @@ def index_chapter(chapter) -> None:
         )
 
     ContextVector.objects.bulk_create(vectors)
-    logger.info("Indexed %d chunks for chapter %d", len(vectors), chapter.pk)
+    logger.info("Indexed %d chunks for chapter %s", len(vectors), chapter.pk)
+
+
+def index_project(project) -> None:
+    from apps.chapters.models import Chapter
+
+    chapters = Chapter.objects.filter(project=project)
+    for chapter in chapters:
+        index_chapter(chapter)
+    logger.info("Indexed all %d chapters for project %s", chapters.count(), project.pk)
 
 
 def retrieve_context(query_text: str, project, top_k: int = TOP_K) -> str:

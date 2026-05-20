@@ -7,7 +7,6 @@ export const authApi = {
     email: string;
     password: string;
     password_confirm: string;
-    profile: string;
   }) => client.post<User>("/auth/register/", data),
 
   login: (data: { username: string; password: string }) =>

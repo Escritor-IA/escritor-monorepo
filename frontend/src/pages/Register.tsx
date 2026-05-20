@@ -13,7 +13,6 @@ export function Register() {
     email: "",
     password: "",
     password_confirm: "",
-    profile: "beginner",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);

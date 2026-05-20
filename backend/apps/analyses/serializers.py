@@ -11,7 +11,7 @@ class AnalysisSerializer(serializers.ModelSerializer):
         fields = (
             "id", "project", "chapter", "chapter_title",
             "analysis_type", "analysis_type_display",
-            "content", "credits_consumed", "ai_model", "created_at",
+            "reader_profiles", "content", "credits_consumed", "ai_model", "created_at",
         )
         read_only_fields = fields
 
@@ -21,11 +21,25 @@ class AnalysisSerializer(serializers.ModelSerializer):
         return None
 
 
+VALID_READER_PROFILES = ["luna", "rafael", "camila", "mateus", "vera"]
+
+
 class RequestAnalysisSerializer(serializers.Serializer):
-    project_id = serializers.IntegerField()
-    chapter_id = serializers.IntegerField(required=False, allow_null=True)
+    project_id = serializers.UUIDField()
+    chapter_id = serializers.UUIDField(required=False, allow_null=True)
     analysis_type = serializers.ChoiceField(choices=[
-        "local", "local_context", "general", "total",
+        "local", "local_context", "general_context", "total",
         "reader_simulation", "creative_suggestion",
     ])
+    reader_profiles = serializers.ListField(
+        child=serializers.ChoiceField(choices=VALID_READER_PROFILES),
+        required=False,
+        default=list,
+    )
     creative_request = serializers.CharField(required=False, allow_blank=True, default="")
+    selected_text = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, data):
+        if data["analysis_type"] == "reader_simulation" and not data.get("reader_profiles"):
+            raise serializers.ValidationError({"reader_profiles": "Selecione ao menos um perfil de leitor."})
+        return data

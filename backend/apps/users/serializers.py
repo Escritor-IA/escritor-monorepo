@@ -17,7 +17,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "password", "password_confirm", "profile")
+        fields = ("id", "username", "email", "password", "password_confirm")
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("password_confirm"):
@@ -30,7 +30,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
-            profile=validated_data.get("profile", "beginner"),
             is_email_verified=False,
             otp_code=otp,
             otp_expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
@@ -91,14 +90,14 @@ class ResendOtpSerializer(serializers.Serializer):
         user.otp_code = otp
         user.otp_expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
         user.save(update_fields=["otp_code", "otp_expires_at"])
-        send_otp_email(user.username ,user.email, otp)
+        send_otp_email(user.username, user.email, otp)
         return user
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "profile", "credits_balance", "plan", "date_joined")
+        fields = ("id", "username", "email", "credits_balance", "plan", "date_joined")
         read_only_fields = ("id", "credits_balance", "plan", "date_joined")
 
 

@@ -1,6 +1,7 @@
 import django.contrib.auth.models
 import django.contrib.auth.validators
 import django.utils.timezone
+import uuid
 from django.db import migrations, models
 
 
@@ -16,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="User",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 ("last_login", models.DateTimeField(blank=True, null=True, verbose_name="last login")),
                 ("is_superuser", models.BooleanField(default=False, verbose_name="superuser status")),
@@ -33,17 +34,15 @@ class Migration(migrations.Migration):
                 ("is_staff", models.BooleanField(default=False, verbose_name="staff status")),
                 ("is_active", models.BooleanField(default=True, verbose_name="active")),
                 ("date_joined", models.DateTimeField(default=django.utils.timezone.now, verbose_name="date joined")),
-                ("profile", models.CharField(
-                    choices=[("beginner", "Iniciante"), ("experienced", "Experiente")],
-                    default="beginner",
-                    max_length=20,
-                )),
                 ("credits_balance", models.IntegerField(default=10)),
                 ("plan", models.CharField(
                     choices=[("free", "Gratuito"), ("basic", "Básico"), ("premium", "Premium")],
                     default="free",
                     max_length=20,
                 )),
+                ("is_email_verified", models.BooleanField(default=False)),
+                ("otp_code", models.CharField(blank=True, max_length=6, null=True)),
+                ("otp_expires_at", models.DateTimeField(blank=True, null=True)),
                 ("groups", models.ManyToManyField(
                     blank=True,
                     related_name="user_set",

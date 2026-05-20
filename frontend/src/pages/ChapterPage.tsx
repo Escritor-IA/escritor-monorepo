@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Chapter, Project } from "@/types";
+import type { Chapter, Project, ProjectGenre } from "@/types";
 import { GENRE_LABELS } from "@/types";
+
+function formatGenres(genres: string[]): string {
+  if (!genres.length) return "FICÇÃO";
+  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ").toUpperCase();
+}
 import { chaptersApi } from "@/api/chapters";
 import { projectsApi } from "@/api/projects";
 import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
@@ -12,7 +17,7 @@ const AUTOSAVE_DELAY = 2000;
 export function ChapterPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const chapterId = Number(id);
+  const chapterId = id!;
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [project, setProject] = useState<Project | null>(null);
@@ -24,8 +29,10 @@ export function ChapterPage() {
   const [showAnalysis, setShowAnalysis] = useState(true);
   const [showOutline, setShowOutline] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
 
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     chaptersApi.get(chapterId).then(({ data }) => {
@@ -71,6 +78,15 @@ export function ChapterPage() {
   };
 
   useEffect(() => () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); }, []);
+
+  const handleEditorSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!editorRef.current?.contains(range.commonAncestorContainer)) return;
+    const text = sel.toString().trim();
+    if (text) setSelectedText(text);
+  }, []);
 
   // Stats
   const wordCount = useMemo(() => content.trim().split(/\s+/).filter(Boolean).length, [content]);
@@ -217,23 +233,28 @@ export function ChapterPage() {
             </div>
 
             <div style={{ marginTop: 28, padding: 14, background: "var(--paper-2)", borderRadius: 10 }}>
-              <div className="eyebrow" style={{ marginBottom: 10 }}>VERSÃO</div>
+              <div className="eyebrow" style={{ marginBottom: 10 }}>DATAS</div>
               <div style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.7 }}>
-                <div>v{chapter.version} · atual</div>
                 <div>Criado em {new Date(chapter.created_at).toLocaleDateString("pt-BR")}</div>
+                <div>Editado em {new Date(chapter.updated_at).toLocaleDateString("pt-BR")}</div>
               </div>
             </div>
           </aside>
         )}
 
         {/* Editor */}
-        <main style={{ display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden", position: "relative" }}>
+        <main
+          ref={editorRef}
+          style={{ display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden", position: "relative" }}
+          onMouseUp={handleEditorSelection}
+          onKeyUp={handleEditorSelection}
+        >
           <div style={{ flex: 1, overflowY: "auto", padding: focusMode ? "60px 24px 120px" : "44px 24px 120px" }}>
             <div style={{ maxWidth: 720, margin: "0 auto" }}>
               {/* Chapter header in editor */}
               <div style={{ marginBottom: 28 }}>
                 <div className="eyebrow" style={{ marginBottom: 14 }}>
-                  CAPÍTULO {String(chapter.number).padStart(2, "0")} · {GENRE_LABELS[project.genre].toUpperCase()}
+                  CAPÍTULO {String(chapter.number).padStart(2, "0")} · {formatGenres(project.genres)}
                 </div>
                 <h1 className="serif" style={{ fontSize: 40, fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.08, color: "var(--ink)" }}>
                   {title || `Capítulo ${chapter.number}`}
@@ -342,7 +363,7 @@ export function ChapterPage() {
 
         {/* AI Panel */}
         {showAnalysis && !focusMode && (
-          <AnalysisPanel projectId={project.id} chapter={chapter} />
+          <AnalysisPanel projectId={project.id} chapter={chapter} selectedText={selectedText} />
         )}
       </div>
     </div>

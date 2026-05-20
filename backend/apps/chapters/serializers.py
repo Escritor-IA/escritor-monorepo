@@ -7,8 +7,8 @@ from .utils import extract_text_from_file
 class ChapterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapter
-        fields = ("id", "project", "number", "title", "content", "version", "created_at", "updated_at")
-        read_only_fields = ("id", "version", "created_at", "updated_at")
+        fields = ("id", "project", "number", "title", "content", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
     def validate(self, attrs):
         project = attrs.get("project") or (self.instance.project if self.instance else None)
@@ -23,7 +23,7 @@ class ChapterSerializer(serializers.ModelSerializer):
 
 
 class ChapterImportSerializer(serializers.Serializer):
-    project_id = serializers.IntegerField()
+    project_id = serializers.UUIDField()
     file = serializers.FileField()
     chapter_title = serializers.CharField(max_length=200, required=False, default="")
 

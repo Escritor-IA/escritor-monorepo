@@ -1,7 +1,12 @@
 import { useState, useEffect, type FormEvent, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Project, Chapter, ProjectStatus } from "@/types";
+import type { Project, Chapter, ProjectGenre, ProjectStatus } from "@/types";
 import { GENRE_LABELS } from "@/types";
+
+function formatGenres(genres: string[]): string {
+  if (!genres.length) return "Sem gênero";
+  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ");
+}
 import { projectsApi } from "@/api/projects";
 import { chaptersApi } from "@/api/chapters";
 import { Layout } from "@/components/Layout/Layout";
@@ -23,7 +28,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const projectId = Number(id);
+  const projectId = id!;
 
   const [project, setProject] = useState<Project | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -38,7 +43,7 @@ export function ProjectPage() {
   const [importTitle, setImportTitle] = useState("");
   const [importing, setImporting] = useState(false);
 
-  const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
+  const [hoveredChapter, setHoveredChapter] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,7 +144,7 @@ export function ProjectPage() {
             <span className={`chip ${STATUS_CHIP[project.status]}`}>
               {STATUS_LABELS[project.status]}
             </span>
-            <span>{GENRE_LABELS[project.genre]}</span>
+            <span>{formatGenres(project.genres)}</span>
             <Dot />
             <span>{chapters.length} capítulo{chapters.length !== 1 ? "s" : ""}</span>
             {totalWords > 0 && (
@@ -222,7 +227,7 @@ export function ProjectPage() {
                         <Dot />
                         <span>~{readMin} min de leitura</span>
                         <Dot />
-                        <span>v{chapter.version}</span>
+                        <span>{new Date(chapter.updated_at).toLocaleDateString("pt-BR")}</span>
                       </>
                     ) : (
                       <span style={{ fontStyle: "italic", color: "var(--ink-4)" }}>página em branco</span>

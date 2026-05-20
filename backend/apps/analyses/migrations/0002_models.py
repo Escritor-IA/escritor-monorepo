@@ -1,11 +1,10 @@
-import pgvector.django
-from django.db import migrations, models
 import django.db.models.deletion
+import pgvector.django
+import uuid
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
-    initial = True
 
     dependencies = [
         ("analyses", "0001_initial"),
@@ -17,18 +16,19 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Analysis",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("analysis_type", models.CharField(
                     choices=[
                         ("local", "Análise Local"),
                         ("local_context", "Análise Local com Contexto"),
-                        ("general", "Análise Geral"),
+                        ("general_context", "Análise Geral com Contexto"),
                         ("total", "Análise Total"),
                         ("reader_simulation", "Simulação de Leitores"),
                         ("creative_suggestion", "Sugestão Criativa"),
                     ],
                     max_length=25,
                 )),
+                ("reader_profiles", models.JSONField(blank=True, default=list)),
                 ("content", models.TextField()),
                 ("credits_consumed", models.PositiveIntegerField(default=1)),
                 ("ai_model", models.CharField(max_length=100)),
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ContextVector",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("text_excerpt", models.TextField()),
                 ("embedding", pgvector.django.VectorField(dimensions=384)),
                 ("indexed_at", models.DateTimeField(auto_now_add=True)),

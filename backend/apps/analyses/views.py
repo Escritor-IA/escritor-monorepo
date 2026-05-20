@@ -60,6 +60,8 @@ class RunAnalysisView(APIView):
                 chapter=chapter,
                 analysis_type=data["analysis_type"],
                 creative_request=data.get("creative_request", ""),
+                reader_profiles=data.get("reader_profiles", []),
+                selected_text=data.get("selected_text", ""),
             )
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)

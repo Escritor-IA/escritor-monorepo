@@ -1,9 +1,3 @@
-"""
-Structured prompt templates for each analysis type.
-
-All prompts are in Brazilian Portuguese and calibrated by literary genre.
-"""
-
 GENRE_LABELS = {
     "fantasy": "Fantasia",
     "romance": "Romance",
@@ -13,135 +7,183 @@ GENRE_LABELS = {
     "adventure": "Aventura",
     "children": "Infantil",
     "young_adult": "Jovem Adulto",
+    "sci_fi": "Ficção Científica",
+    "thriller": "Thriller",
+    "historical": "Histórico",
+    "biography": "Biografia",
+    "self_help": "Autoajuda",
     "other": "Ficção",
 }
 
-SYSTEM_BASE = (
-    "Você é um editor literário especializado em ficção brasileira. "
-    "Seu papel é oferecer feedback construtivo, preciso e respeitoso à voz do autor. "
-    "Nunca reescreva o texto do autor. Aponte pontos de melhoria com exemplos específicos. "
-    "Responda sempre em português brasileiro."
-)
+
+def _genre_str(genres: list) -> str:
+    if not genres:
+        return "Ficção"
+    labels = [GENRE_LABELS.get(g, g) for g in genres]
+    return ", ".join(labels)
 
 
-def build_local_prompt(chapter_content: str, genre: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
+def build_system(genres: list) -> str:
+    return (
+        f"Você é um editor literário de ficção brasileira ({_genre_str(genres)}). "
+        "Ofereça feedback construtivo, preciso e respeitoso à voz do autor. "
+        "Nunca reescreva o texto. Aponte melhorias com trechos específicos. "
+        "Responda em português brasileiro."
+    )
+
+
+def build_local_prompt(excerpt: str, genres: list, context: str | None = None) -> list:
+    if context:
+        user_content = (
+            f"Contexto anterior relevante (para referência de coerência):\n{context}\n\n"
+            f"=== TRECHO SELECIONADO PELO AUTOR ===\n{excerpt}\n=== FIM DO TRECHO ===\n\n"
+            "Analise SOMENTE o trecho acima. Não cite nem mencione nada que não esteja dentro do trecho.\n\n"
+            "Análise NARRATIVA:\n"
+            "1. Continuidade com o contexto anterior (personagens, ambientação, timeline)\n"
+            "2. Consistência interna do trecho (motivações, lógica dos eventos)\n"
+            "3. Qualidade textual (clareza, ritmo, estilo)\n"
+            "Seja objetivo; cite apenas palavras ou frases do trecho fornecido."
+        )
+    else:
+        user_content = (
+            f"=== TRECHO SELECIONADO PELO AUTOR ===\n{excerpt}\n=== FIM DO TRECHO ===\n\n"
+            "Analise SOMENTE o trecho acima. Não invente, suponha ou mencione nada que não esteja explicitamente nesse trecho.\n\n"
+            "Análise LOCAL:\n"
+            "1. Ortografia e gramática\n"
+            "2. Clareza e coesão\n"
+            "3. Ritmo e fluidez\n"
+            "4. Adequação ao gênero\n"
+            "Seja objetivo e preciso; cite apenas palavras ou frases do trecho fornecido."
+        )
     return [
-        {"role": "system", "content": SYSTEM_BASE},
+        {"role": "system", "content": build_system(genres)},
+        {"role": "user", "content": user_content},
+    ]
+
+
+def build_general_context_prompt(context: str, genres: list) -> list:
+    return [
+        {"role": "system", "content": build_system(genres)},
         {
             "role": "user",
             "content": (
-                f"Gênero literário: {genre_label}\n\n"
-                f"Capítulo para análise:\n{chapter_content}\n\n"
-                "Realize uma análise LOCAL deste capítulo, abordando:\n"
-                "1. Ortografia e gramática\n"
-                "2. Clareza e coesão\n"
-                "3. Ritmo e fluidez da prosa\n"
-                "4. Estilo adequado ao gênero\n"
-                "Seja objetivo e aponte trechos específicos quando relevante."
+                f"Trechos representativos da obra:\n{context}\n\n"
+                "ANÁLISE GERAL — avalie: estrutura narrativa e arco dramático; "
+                "desenvolvimento e consistência dos personagens; coerência do enredo e subtramas; "
+                "ritmo global; pontos fortes e oportunidades de melhoria. "
+                "Conclua com recomendações prioritárias."
             ),
         },
     ]
 
 
-def build_local_context_prompt(chapter_content: str, genre: str, context: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
+def build_total_prompt(full_manuscript: str, genres: list) -> list:
     return [
-        {"role": "system", "content": SYSTEM_BASE},
+        {"role": "system", "content": build_system(genres)},
         {
             "role": "user",
             "content": (
-                f"Gênero literário: {genre_label}\n\n"
-                f"Contexto recuperado da obra (trechos anteriores relevantes):\n{context}\n\n"
-                f"Capítulo atual:\n{chapter_content}\n\n"
-                "Realize uma análise LOCAL COM CONTEXTO, avaliando:\n"
-                "1. Continuidade narrativa em relação ao contexto anterior\n"
-                "2. Consistência de personagens e motivações\n"
-                "3. Coerência de ambientação e linha do tempo\n"
-                "4. Qualidade textual (ortografia, ritmo, estilo)\n"
-                "Aponte inconsistências ou pontos de melhoria com referências ao contexto."
-            ),
-        },
-    ]
-
-
-def build_general_prompt(all_chapters_summary: str, genre: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
-    return [
-        {"role": "system", "content": SYSTEM_BASE},
-        {
-            "role": "user",
-            "content": (
-                f"Gênero literário: {genre_label}\n\n"
-                f"Resumo/conteúdo da obra:\n{all_chapters_summary}\n\n"
-                "Realize uma ANÁLISE GERAL DA OBRA, avaliando:\n"
-                "1. Estrutura narrativa e arco dramático\n"
-                "2. Desenvolvimento e consistência dos personagens\n"
-                "3. Coerência do enredo e das subtramas\n"
-                "4. Ritmo global da narrativa\n"
-                "5. Pontos fortes e oportunidades de melhoria\n"
-                "Ofereça um panorama completo com recomendações prioritárias."
-            ),
-        },
-    ]
-
-
-def build_total_prompt(full_manuscript: str, genre: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
-    return [
-        {"role": "system", "content": SYSTEM_BASE},
-        {
-            "role": "user",
-            "content": (
-                f"Gênero literário: {genre_label}\n\n"
                 f"Manuscrito completo:\n{full_manuscript}\n\n"
-                "Realize uma ANÁLISE TOTAL DO MANUSCRITO, cobrindo:\n"
-                "1. Estrutura geral e divisão em capítulos\n"
-                "2. Desenvolvimento completo de personagens\n"
-                "3. Consistência narrativa (enredo, subtramas, timeline)\n"
-                "4. Estilo, voz autoral e adequação ao gênero\n"
-                "5. Qualidade textual global\n"
-                "6. Simulação de reação de três perfis de leitor: leitor casual, "
-                "leitor do gênero e leitor crítico\n"
-                "7. Recomendações finais antes da publicação\n"
-                "Esta é a análise mais completa — seja detalhado e abrangente."
+                "ANÁLISE TOTAL — cubra: estrutura geral e capítulos; "
+                "desenvolvimento completo de personagens; consistência narrativa (enredo, subtramas, timeline); "
+                "estilo, voz autoral e adequação ao gênero; qualidade textual global; "
+                "reação simulada de três leitores (casual, do gênero, crítico); "
+                "recomendações finais pré-publicação. Seja detalhado e abrangente."
             ),
         },
     ]
 
 
-def build_reader_simulation_prompt(chapter_content: str, genre: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
+READER_PROFILES = {
+    "luna": {
+        "name": "Luna Bastos",
+        "role": "Leitora Casual · Nível 1",
+        "system": (
+            "Você é Luna Bastos, leitora casual brasileira. "
+            "Lê pelo prazer puro — romance, distopia Young Adult, fanfiction. "
+            "Não conhece termos técnicos literários, mas sabe exatamente quando um livro 'virou' pra você. "
+            "Avalia pelo feeling: ritmo rápido, personagens carismáticos, final satisfatório. "
+            "Escreva de forma animada, use emojis com moderação, dê uma nota de 1 a 5 estrelas no final com justificativa breve. "
+            "Responda em português brasileiro."
+        ),
+    },
+    "rafael": {
+        "name": "Rafael Andrade",
+        "role": "Leitor de Gênero · Nível 2",
+        "system": (
+            "Você é Rafael Andrade, leitor apaixonado de gênero. "
+            "Consome thriller, fantasia épica e ficção científica soft em surtos compulsivos. "
+            "Conhece bem as convenções do gênero — sabe quando uma obra as subverte com inteligência ou só faz feijão com arroz. "
+            "Avalia: tensão narrativa, world-building, reviravoltas, arcos de personagens. "
+            "Escreva com calor e opiniões firmes. Compare com outros títulos do gênero quando pertinente. "
+            "Responda em português brasileiro."
+        ),
+    },
+    "camila": {
+        "name": "Camila Azevedo",
+        "role": "Leitora Culta · Nível 3",
+        "system": (
+            "Você é Camila Azevedo, leitora culta e versátil. "
+            "Aprecia literatura contemporânea, ensaio, realismo mágico e memórias. "
+            "Faz a ponte entre o leitor comum e o especialista: percebe influências e diálogos entre obras, mas escreve para ser entendida por qualquer um. "
+            "Avalia: coerência interna, voz autoral, posicionamento dentro da tradição literária. "
+            "Escreva de forma equilibrada entre subjetividade e análise. Cite trechos para fundamentar opiniões. "
+            "Responda em português brasileiro."
+        ),
+    },
+    "mateus": {
+        "name": "Mateus Figueiredo",
+        "role": "Leitor Técnico · Nível 4",
+        "system": (
+            "Você é Mateus Figueiredo, leitor técnico com formação em Letras e prática de escrita criativa. "
+            "Aprecia literatura modernista, ficção experimental, contos e poesia em prosa. "
+            "Lê lento e deliberado, relê capítulos, presta atenção obsessiva à prosa, sintaxe e estrutura. "
+            "Avalia: uso da linguagem, escolhas de narrador, ambiguidade produtiva, como o texto cria sentido além do enredo. "
+            "Escreva de forma densa e precisa — difícil quando necessário, mas nunca hermético por descuido. "
+            "Responda em português brasileiro."
+        ),
+    },
+    "vera": {
+        "name": "Vera Salomão",
+        "role": "Crítica Literária · Nível 5",
+        "system": (
+            "Você é Vera Salomão, crítica literária com décadas de leitura e escrita crítica. "
+            "Aprecia literatura periférica, ficção pós-colonial, autoficção e ensaio crítico. "
+            "Lê como ato político e filosófico — questiona quem publica, quem narra, quem é silenciado. "
+            "Avalia: posição ideológica da obra, representatividade, originalidade dentro do cânone, subversão de expectativas, o que o texto não diz. "
+            "Escreva de forma contundente, rigorosa e profundamente referenciada. Não poupe nem clássicos intocáveis. "
+            "Responda em português brasileiro."
+        ),
+    },
+}
+
+
+def build_reader_profile_prompt(chapter_content: str, genres: list, profile_slug: str) -> list:
+    profile = READER_PROFILES[profile_slug]
     return [
-        {"role": "system", "content": SYSTEM_BASE},
+        {"role": "system", "content": profile["system"]},
         {
             "role": "user",
             "content": (
-                f"Gênero literário: {genre_label}\n\n"
+                f"Gênero da obra: {_genre_str(genres)}\n\n"
+                f"Trecho para leitura:\n{chapter_content}\n\n"
+                "Compartilhe sua reação honesta como leitor(a): impressão geral, o que funcionou, o que pode melhorar. "
+                "Seja fiel à sua personalidade e critérios de avaliação."
+            ),
+        },
+    ]
+
+
+def build_creative_suggestion_prompt(chapter_content: str, genres: list, request: str) -> list:
+    return [
+        {"role": "system", "content": build_system(genres)},
+        {
+            "role": "user",
+            "content": (
                 f"Trecho:\n{chapter_content}\n\n"
-                "Simule a reação de três perfis de leitor ao ler este trecho:\n"
-                "1. Leitor Casual: alguém que lê por entretenimento, sem experiência crítica\n"
-                "2. Leitor do Gênero: fã experiente do gênero, que conhece as convenções\n"
-                "3. Leitor Crítico: editor ou crítico literário profissional\n\n"
-                "Para cada perfil, descreva: impressão geral, o que funcionou, o que poderia melhorar."
-            ),
-        },
-    ]
-
-
-def build_creative_suggestion_prompt(chapter_content: str, genre: str, request: str) -> list:
-    genre_label = GENRE_LABELS.get(genre, "Ficção")
-    return [
-        {"role": "system", "content": SYSTEM_BASE},
-        {
-            "role": "user",
-            "content": (
-                f"Gênero literário: {genre_label}\n\n"
-                f"Trecho atual:\n{chapter_content}\n\n"
-                f"Solicitação do autor: {request}\n\n"
-                "Ofereça sugestões criativas para ajudar o autor. "
-                "Apresente opções, não decisões — o autor escolhe o caminho. "
-                "Nunca reescreva o texto; apresente possibilidades e direções."
+                f"Pedido do autor: {request}\n\n"
+                "Ofereça sugestões criativas como opções, não decisões. "
+                "Nunca reescreva o texto; apresente direções possíveis."
             ),
         },
     ]

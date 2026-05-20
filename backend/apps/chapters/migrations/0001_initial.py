@@ -1,5 +1,6 @@
-from django.db import migrations, models
 import django.db.models.deletion
+import uuid
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -14,11 +15,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Chapter",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("number", models.PositiveIntegerField()),
                 ("title", models.CharField(blank=True, max_length=200)),
                 ("content", models.TextField(blank=True)),
-                ("version", models.PositiveIntegerField(default=1)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("project", models.ForeignKey(
