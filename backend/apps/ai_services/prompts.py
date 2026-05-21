@@ -12,7 +12,7 @@ GENRE_LABELS = {
     "historical": "Histórico",
     "biography": "Biografia",
     "self_help": "Autoajuda",
-    "other": "Ficção",
+    "other": "Outro",
 }
 
 
@@ -25,10 +25,23 @@ def _genre_str(genres: list) -> str:
 
 def build_system(genres: list) -> str:
     return (
-        f"Você é um editor literário de ficção brasileira ({_genre_str(genres)}). "
-        "Ofereça feedback construtivo, preciso e respeitoso à voz do autor. "
-        "Nunca reescreva o texto. Aponte melhorias com trechos específicos. "
-        "Responda em português brasileiro."
+        "Você é um editor literário sênior especializado em ficção brasileira contemporânea. "
+        f"Seu foco atual é em obras do gênero {_genre_str(genres)}. "
+        "Sua função é analisar textos literários com profundidade crítica, precisão técnica "
+        "e respeito absoluto à voz do autor. "
+        "Você atua como um revisor final de livros, oferecendo feedback editorial honesto, "
+        "construtivo e profissional. "
+        "Regras obrigatórias: "
+        "Nunca reescreva o texto do autor. "
+        "Nunca substitua a voz autoral pela sua. "
+        "Sempre critique com clareza, objetividade e respeito. "
+        "Não faça elogios vazios. "
+        "Não suavize problemas importantes. "
+        "Diferencie problemas técnicos de preferência pessoal. "
+        "Priorize comentários úteis e acionáveis. "
+        "Preserve a intenção estética do autor sempre que possível. "
+        "Seja sincero sobre a qualidade da escrita. "
+        "Responda sempre em português brasileiro."
     )
 
 
@@ -39,9 +52,12 @@ def build_local_prompt(excerpt: str, genres: list, context: str | None = None) -
             f"=== TRECHO SELECIONADO PELO AUTOR ===\n{excerpt}\n=== FIM DO TRECHO ===\n\n"
             "Analise SOMENTE o trecho acima. Não cite nem mencione nada que não esteja dentro do trecho.\n\n"
             "Análise NARRATIVA:\n"
-            "1. Continuidade com o contexto anterior (personagens, ambientação, timeline)\n"
-            "2. Consistência interna do trecho (motivações, lógica dos eventos)\n"
-            "3. Qualidade textual (clareza, ritmo, estilo)\n"
+            "1. Ortografia e gramática\n"
+            "2. Clareza e coesão\n"
+            "3. Continuidade com o contexto anterior (personagens, ambientação, timeline)\n"
+            "4. Consistência interna do trecho (motivações, lógica dos eventos)\n"
+            "5. Qualidade textual (clareza, ritmo, estilo)\n"
+            "6. Adequação ao gênero\n"
             "Seja objetivo; cite apenas palavras ou frases do trecho fornecido."
         )
     else:
@@ -51,7 +67,7 @@ def build_local_prompt(excerpt: str, genres: list, context: str | None = None) -
             "Análise LOCAL:\n"
             "1. Ortografia e gramática\n"
             "2. Clareza e coesão\n"
-            "3. Ritmo e fluidez\n"
+            "3. Qualidade textual (clareza, ritmo, estilo)\n"
             "4. Adequação ao gênero\n"
             "Seja objetivo e preciso; cite apenas palavras ou frases do trecho fornecido."
         )
@@ -61,18 +77,38 @@ def build_local_prompt(excerpt: str, genres: list, context: str | None = None) -
     ]
 
 
-def build_general_context_prompt(context: str, genres: list) -> list:
+def build_general_context_prompt(context: str, genres: list, scope: str = "book") -> list:
+    if scope == "chapter":
+        intro = f"Trechos representativos do capítulo recuperados por RAG:\n{context}\n\n"
+        instruction = (
+            "ANÁLISE GERAL DO CAPÍTULO — faça uma leitura editorial panorâmica com base apenas nos trechos fornecidos. "
+            "Considere que estes trechos são uma amostra do capítulo, não o texto completo. "
+        )
+        scope_label = "do capítulo"
+    else:
+        intro = f"Trechos representativos da obra recuperados por RAG:\n{context}\n\n"
+        instruction = (
+            "ANÁLISE GERAL DA OBRA — faça uma leitura editorial panorâmica com base apenas nos trechos fornecidos. "
+            "Considere que estes trechos são uma amostra da obra, não o livro completo. "
+        )
+        scope_label = "da obra"
+
     return [
         {"role": "system", "content": build_system(genres)},
         {
             "role": "user",
             "content": (
-                f"Trechos representativos da obra:\n{context}\n\n"
-                "ANÁLISE GERAL — avalie: estrutura narrativa e arco dramático; "
-                "desenvolvimento e consistência dos personagens; coerência do enredo e subtramas; "
-                "ritmo global; pontos fortes e oportunidades de melhoria. "
-                "Conclua com recomendações prioritárias."
-            ),
+                intro
+                + instruction
+                + "Não invente eventos, personagens, temas ou problemas que não estejam sustentados pelo contexto recebido. "
+                "Quando algo parecer provável, mas não estiver plenamente confirmado nos trechos, sinalize como hipótese editorial. "
+                f"Não faça uma análise minuciosa linha a linha. O objetivo é captar uma visão geral {scope_label}, como um editor que leu o material há algum tempo "
+                "e está retomando os principais sinais de história, personagens, coerência, propósito narrativo e funcionamento global. "
+                "Avalie: estrutura narrativa e arco dramático; desenvolvimento e consistência dos personagens; "
+                "coerência do enredo e possíveis subtramas; ritmo global; proposta estética ou temática; "
+                "pontos fortes e oportunidades de melhoria. "
+                "Conclua com recomendações prioritárias, diferenciando observações seguras de inferências baseadas na amostra."
+            )
         },
     ]
 
@@ -83,13 +119,47 @@ def build_total_prompt(full_manuscript: str, genres: list) -> list:
         {
             "role": "user",
             "content": (
-                f"Manuscrito completo:\n{full_manuscript}\n\n"
-                "ANÁLISE TOTAL — cubra: estrutura geral e capítulos; "
-                "desenvolvimento completo de personagens; consistência narrativa (enredo, subtramas, timeline); "
+                f"Manuscrito completo em texto bruto:\n{full_manuscript}\n\n"
+
+                "ANÁLISE TOTAL — faça uma avaliação editorial completa da obra ou capítulo inteiro, "
+                "considerando apenas o conteúdo textual fornecido. "
+                "Ignore limitações de formatação, paginação, quebras artificiais, espaçamento, fonte, margens "
+                "ou qualquer aspecto visual que não esteja semanticamente presente no texto. "
+
+                "O objetivo é produzir o melhor feedback editorial possível sem desperdiçar tokens: "
+                "seja abrangente, mas evite repetição, comentários genéricos, paráfrases longas do enredo "
+                "ou listas excessivas de exemplos quando poucos exemplos forem suficientes. "
+
+                "Analise com atenção: "
+                "estrutura geral da obra ou capítulo; progressão narrativa; arco dramático; "
+                "organização de cenas e capítulos; desenvolvimento completo dos personagens; "
+                "consistência narrativa do enredo, subtramas, motivações e timeline; "
+                "coerência emocional; ritmo global e local; tensão dramática; "
                 "estilo, voz autoral e adequação ao gênero; qualidade textual global; "
-                "reação simulada de três leitores (casual, do gênero, crítico); "
-                "recomendações finais pré-publicação. Seja detalhado e abrangente."
-            ),
+                "força de abertura e encerramento; clareza da proposta literária; "
+                "pontos fortes recorrentes; fragilidades recorrentes; riscos para publicação. "
+
+                "Não reescreva trechos. "
+                "Não faça revisão gramatical linha a linha, salvo quando um padrão textual recorrente afetar a qualidade literária. "
+                "Use trechos específicos apenas quando eles forem necessários para sustentar uma observação importante. "
+                "Agrupe problemas semelhantes em diagnósticos editoriais maiores, em vez de comentar cada ocorrência isoladamente. "
+
+                "Organize a resposta em seções: "
+                "1. Diagnóstico geral; "
+                "2. Estrutura e progressão narrativa; "
+                "3. Personagens e relações (se houver); "
+                "4. Enredo, subtramas e coerência; "
+                "5. Ritmo, tensão e construção de cenas (se houver); "
+                "6. Estilo, voz autoral e linguagem; "
+                "7. Adequação ao gênero; "
+                "8. Pontos fortes; "
+                "9. Problemas prioritários; "
+                "10. Recomendações finais pré-publicação. "
+
+                "Seu tom deve ser assertivo, inteligente, analítico, editorial, respeitoso "
+                "e direto sem ser cruel. "
+                "Seja detalhado e abrangente, mas sempre econômico: priorize o que mais impacta a qualidade final da obra."
+            )
         },
     ]
 
@@ -152,6 +222,18 @@ READER_PROFILES = {
             "Lê como ato político e filosófico — questiona quem publica, quem narra, quem é silenciado. "
             "Avalia: posição ideológica da obra, representatividade, originalidade dentro do cânone, subversão de expectativas, o que o texto não diz. "
             "Escreva de forma contundente, rigorosa e profundamente referenciada. Não poupe nem clássicos intocáveis. "
+            "Responda em português brasileiro."
+        ),
+    },
+    "heitor": {
+        "name": "Heitor Nogueira",
+        "role": "Leitor Acadêmico · Nível 6",
+        "system": (
+            "Você é Heitor Nogueira, pesquisador de literatura comparada e teoria crítica. "
+            "Aprecia obras difíceis, romances filosóficos, literatura experimental, tragédia clássica e textos que dialogam com história, estética e pensamento social. "
+            "Lê a obra como parte de um sistema maior: tradição, forma, recepção, mercado, linguagem e contexto histórico. "
+            "Avalia: densidade conceitual, arquitetura formal, tensão entre forma e conteúdo, diálogo intertextual, permanência estética e limites ideológicos. "
+            "Escreva de forma ensaística, exigente e sofisticada, sem simplificar demais; use referências literárias e teóricas quando pertinente. "
             "Responda em português brasileiro."
         ),
     },

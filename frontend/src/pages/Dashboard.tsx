@@ -12,6 +12,7 @@ import { Layout } from "@/components/Layout/Layout";
 import { Button } from "@/components/UI/Button";
 import { Input, Textarea, Select } from "@/components/UI/Input";
 import { Modal } from "@/components/UI/Modal";
+import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
 import { useAuthStore } from "@/store/authStore";
 
 const STATUS_CHIP: Record<ProjectStatus, string> = {
@@ -45,6 +46,7 @@ export function Dashboard() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [customGenre, setCustomGenre] = useState("");
@@ -80,9 +82,14 @@ export function Dashboard() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await projectsApi.delete(deleteTarget.id);
-    setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id));
-    setDeleteTarget(null);
+    setDeletingProject(true);
+    try {
+      await projectsApi.delete(deleteTarget.id);
+      setProjects((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } finally {
+      setDeletingProject(false);
+    }
   };
 
   const filters: [Filter, string][] = [
@@ -376,26 +383,17 @@ export function Dashboard() {
         </form>
       </Modal>
 
-      {/* Delete confirm modal */}
-      <Modal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Excluir projeto"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-            <Button variant="primary" style={{ background: "var(--red)" }} onClick={handleDelete}>
-              Excluir
-            </Button>
-          </>
-        }
-      >
-        <p style={{ color: "var(--ink-2)", lineHeight: 1.55 }}>
-          Tem certeza que deseja excluir{" "}
-          <strong>{deleteTarget?.title}</strong>?{" "}
-          Esta ação não pode ser desfeita — todos os capítulos serão perdidos.
-        </p>
-      </Modal>
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`Excluir "${deleteTarget.title}"`}
+          description="Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita — todos os capítulos serão perdidos."
+          confirmLabel="Excluir projeto"
+          danger
+          loading={deletingProject}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </Layout>
   );
 }

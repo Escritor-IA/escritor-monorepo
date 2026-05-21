@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Project, Chapter, ProjectGenre, ProjectStatus } from "@/types";
 import { GENRE_LABELS } from "@/types";
+import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
 
 function formatGenres(genres: string[]): string {
   if (!genres.length) return "Sem gênero";
@@ -13,6 +14,7 @@ import { Layout } from "@/components/Layout/Layout";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { Modal } from "@/components/UI/Modal";
+import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
 
 const STATUS_CHIP: Record<ProjectStatus, string> = {
   in_progress: "chip-progress",
@@ -44,6 +46,8 @@ export function ProjectPage() {
   const [importing, setImporting] = useState(false);
 
   const [hoveredChapter, setHoveredChapter] = useState<string | null>(null);
+  const [deleteChapterTarget, setDeleteChapterTarget] = useState<Chapter | null>(null);
+  const [deletingChapter, setDeletingChapter] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,10 +92,16 @@ export function ProjectPage() {
     }
   };
 
-  const handleDeleteChapter = async (chapter: Chapter) => {
-    if (!confirm(`Excluir "${chapter.title || `Capítulo ${chapter.number}`}"?`)) return;
-    await chaptersApi.delete(chapter.id);
-    setChapters((prev) => prev.filter((c) => c.id !== chapter.id));
+  const handleConfirmDeleteChapter = async () => {
+    if (!deleteChapterTarget) return;
+    setDeletingChapter(true);
+    try {
+      await chaptersApi.delete(deleteChapterTarget.id);
+      setChapters((prev) => prev.filter((c) => c.id !== deleteChapterTarget.id));
+      setDeleteChapterTarget(null);
+    } finally {
+      setDeletingChapter(false);
+    }
   };
 
   if (loading) {
@@ -174,6 +184,10 @@ export function ProjectPage() {
         </div>
       </div>
 
+      {/* Two-column layout: chapters + book analysis */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 0, alignItems: "start", margin: "0 -24px" }}>
+      <div style={{ padding: "0 24px" }}>
+
       {/* Chapters */}
       {chapters.length === 0 ? (
         <div className="card" style={{ padding: 64, textAlign: "center", color: "var(--ink-3)" }}>
@@ -244,7 +258,7 @@ export function ProjectPage() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteChapter(chapter); }}
+                    onClick={(e) => { e.stopPropagation(); setDeleteChapterTarget(chapter); }}
                     style={{ opacity: hovered ? 1 : 0, transition: "opacity .12s ease", color: "var(--ink-4)", padding: 6 }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = "var(--red)")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
@@ -261,6 +275,18 @@ export function ProjectPage() {
           })}
         </div>
       )}
+
+      </div>{/* end chapters column */}
+
+      {/* Book analysis panel */}
+      <div style={{ position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
+        <AnalysisPanel
+          projectId={projectId}
+          scope="book"
+        />
+      </div>
+
+      </div>{/* end two-column grid */}
 
       {/* New chapter modal */}
       <Modal
@@ -286,6 +312,18 @@ export function ProjectPage() {
           />
         </form>
       </Modal>
+
+      {deleteChapterTarget && (
+        <ConfirmDialog
+          title={`Excluir "${deleteChapterTarget.title || `Capítulo ${deleteChapterTarget.number}`}"`}
+          description="Tem certeza que deseja excluir este capítulo? Esta ação não pode ser desfeita."
+          confirmLabel="Excluir capítulo"
+          danger
+          loading={deletingChapter}
+          onConfirm={handleConfirmDeleteChapter}
+          onCancel={() => setDeleteChapterTarget(null)}
+        />
+      )}
 
       {/* Import modal */}
       <Modal

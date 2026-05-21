@@ -60,7 +60,10 @@ export type AnalysisType =
   | "general_context"
   | "total"
   | "reader_simulation"
-  | "creative_suggestion";
+  | "creative_suggestion"
+  | "book_general"
+  | "book_total"
+  | "book_reader_simulation";
 
 export interface Analysis {
   id: string;
@@ -101,17 +104,23 @@ export const GENRE_LABELS: Record<ProjectGenre, string> = {
 export const ANALYSIS_LABELS: Record<AnalysisType, string> = {
   local: "Análise Local (1 crédito)",
   local_context: "Análise Narrativa (2 créditos)",
-  general_context: "Análise Geral (3 créditos)",
-  total: "Análise Total (5 créditos)",
+  general_context: "Análise Geral do Capítulo (2 créditos)",
+  total: "Análise Total do Capítulo (3 créditos)",
   reader_simulation: "Simulação de Leitores (1 cr./perfil)",
   creative_suggestion: "Sugestão Criativa (1 crédito)",
+  book_general: "Análise Geral do Livro (4 créditos)",
+  book_total: "Análise Total do Livro (6 créditos)",
+  book_reader_simulation: "Simulação de Leitores — Livro (2 cr./perfil)",
 };
 
 export const ANALYSIS_COSTS: Record<AnalysisType, number> = {
   local: 1,
   local_context: 2,
-  general_context: 3,
-  total: 5,
+  general_context: 2,
+  total: 3,
   reader_simulation: 1,
   creative_suggestion: 1,
+  book_general: 4,
+  book_total: 6,
+  book_reader_simulation: 2,
 };

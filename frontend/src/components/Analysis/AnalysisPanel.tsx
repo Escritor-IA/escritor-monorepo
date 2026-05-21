@@ -11,9 +11,10 @@ interface AnalysisPanelProps {
   chapter?: Chapter | null;
   selectedText?: string;
   onCreditsUpdate?: (credits: number) => void;
+  scope?: "chapter" | "book";
 }
 
-type ReaderProfileSlug = "luna" | "rafael" | "camila" | "mateus" | "vera";
+type ReaderProfileSlug = "luna" | "rafael" | "camila" | "mateus" | "vera" | "heitor";
 
 interface ReaderProfile {
   slug: ReaderProfileSlug;
@@ -113,56 +114,99 @@ const READER_PROFILES: ReaderProfile[] = [
     strengths: ["Crítica cultural e ideológica", "Cânone e contra-cânone", "Análise de representatividade", "Perspectiva histórica ampla"],
     levelLabel: "⭐⭐⭐⭐⭐ Expert",
   },
+  {
+    slug: "heitor",
+    name: "Heitor Nogueira",
+    initials: "HN",
+    avatarBg: "#EAF0FA",
+    avatarColor: "#1A3A6B",
+    role: "Leitor Acadêmico · Nível 6",
+    tagline: "Lê a obra como parte de um sistema maior: tradição, forma, recepção, mercado e contexto histórico.",
+    genres: ["Romances Filosóficos", "Lit. Experimental", "Tragédia Clássica", "Teoria Crítica"],
+    readingStyle: "Lento e ensaístico. Anota referências, compara com outros textos, busca o diálogo intertextual.",
+    criteria: "Densidade conceitual, arquitetura formal, tensão entre forma e conteúdo, diálogo intertextual.",
+    reviewTone: "Ensaístico, exigente e sofisticado, sem simplificar demais. Usa referências literárias e teóricas.",
+    bio: "Pesquisador de literatura comparada e teoria crítica. Aprecia obras difíceis e textos que dialogam com história, estética e pensamento social. A leitura mais densa e mais rara do sistema.",
+    strengths: ["Literatura comparada", "Teoria crítica aplicada", "Perspectiva histórica e filosófica", "Intertextualidade"],
+    levelLabel: "⭐⭐⭐⭐⭐⭐ Acadêmico",
+  },
 ];
 
-const ANALYSIS_TYPES: { id: AnalysisType; label: string; sub: string; icon: string }[] = [
+const CHAPTER_ANALYSIS_TYPES: { id: AnalysisType; label: string; sub: string; icon: string }[] = [
   { id: "local", label: "Análise Local", sub: "Trecho selecionado. Estilo, ritmo, palavras repetidas.", icon: "target" },
-  { id: "local_context", label: "Análise Narrativa", sub: "Trecho + capítulos anteriores. Coerência narrativa.", icon: "layers" },
-  { id: "general_context", label: "Análise Geral", sub: "Capítulo inteiro. Arco, conflito, personagem.", icon: "book" },
-  { id: "total", label: "Análise Total", sub: "Manuscrito completo. Visão de obra.", icon: "brain" },
-  { id: "reader_simulation", label: "Simulação de Leitores", sub: "Escolha os perfis que vão reagir ao texto.", icon: "users" },
+  { id: "local_context", label: "Análise Narrativa", sub: "Trecho + contexto do capítulo. Coerência narrativa.", icon: "layers" },
+  { id: "general_context", label: "Análise Geral", sub: "Capítulo inteiro via RAG. Arco, conflito, personagem.", icon: "book" },
+  { id: "total", label: "Análise Total", sub: "Capítulo completo em texto bruto. Visão detalhada.", icon: "brain" },
+  { id: "reader_simulation", label: "Simulação de Leitores", sub: "Escolha os perfis que vão reagir ao capítulo.", icon: "users" },
   { id: "creative_suggestion", label: "Sugestão Criativa", sub: "Direções, viradas, possíveis caminhos.", icon: "lightbulb" },
+];
+
+const BOOK_ANALYSIS_TYPES: { id: AnalysisType; label: string; sub: string; icon: string }[] = [
+  { id: "book_general", label: "Análise Geral do Livro", sub: "Livro inteiro via RAG. Estrutura, arco, personagens.", icon: "book" },
+  { id: "book_total", label: "Análise Total do Livro", sub: "Manuscrito completo em texto bruto. Visão de obra.", icon: "brain" },
+  { id: "book_reader_simulation", label: "Simulação de Leitores", sub: "Perfis lendo o livro inteiro. Mais preciso que por capítulo.", icon: "users" },
 ];
 
 const CHAPTER_REQUIRED: AnalysisType[] = ["local", "local_context", "reader_simulation", "creative_suggestion"];
 const SELECTION_REQUIRED: AnalysisType[] = ["local", "local_context"];
+const READER_TYPES: AnalysisType[] = ["reader_simulation", "book_reader_simulation"];
+const BOOK_TYPES: AnalysisType[] = ["book_general", "book_total", "book_reader_simulation"];
 
-const SCORES = [
-  { label: "Coesão", v: 86 },
-  { label: "Ritmo", v: 72 },
-  { label: "Repetição", v: 45 },
-  { label: "Originalidade", v: 79 },
-];
-
-export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdate }: AnalysisPanelProps) {
+export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdate, scope = "chapter" }: AnalysisPanelProps) {
   const { user, updateCredits } = useAuthStore();
-  const [selectedType, setSelectedType] = useState<AnalysisType>("local");
+  const analysisTypes = scope === "book" ? BOOK_ANALYSIS_TYPES : CHAPTER_ANALYSIS_TYPES;
+  const defaultType = analysisTypes[0].id;
+
+  const [selectedType, setSelectedType] = useState<AnalysisType>(defaultType);
   const [selectedProfiles, setSelectedProfiles] = useState<ReaderProfileSlug[]>([]);
   const [infoProfile, setInfoProfile] = useState<ReaderProfileSlug | null>(null);
   const [creativeRequest, setCreativeRequest] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Analysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<Analysis[]>([]);
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
 
-  const requiresChapter = CHAPTER_REQUIRED.includes(selectedType);
-  const requiresSelection = SELECTION_REQUIRED.includes(selectedType);
+  const isReaderType = READER_TYPES.includes(selectedType);
+  const requiresChapter = scope === "chapter" && CHAPTER_REQUIRED.includes(selectedType);
+  const requiresSelection = scope === "chapter" && SELECTION_REQUIRED.includes(selectedType);
   const resultRef = useRef<HTMLDivElement>(null);
-  const cost = selectedType === "reader_simulation"
-    ? selectedProfiles.length
-    : ANALYSIS_COSTS[selectedType];
+
+  const creditPerProfile = selectedType === "book_reader_simulation" ? 2 : 1;
+  const cost = isReaderType
+    ? selectedProfiles.length * creditPerProfile
+    : ANALYSIS_COSTS[selectedType] ?? 1;
 
   const canRun = !!user &&
     (!requiresChapter || !!chapter) &&
     (!requiresSelection || !!selectedText) &&
-    (selectedType !== "reader_simulation"
-      ? user.user_plan.credits >= cost
-      : selectedProfiles.length > 0 && user.user_plan.credits >= cost);
+    (!isReaderType ? user.user_plan.credits >= cost : selectedProfiles.length > 0 && user.user_plan.credits >= cost);
+
+  useEffect(() => {
+    setSelectedType(defaultType);
+    setSelectedProfiles([]);
+    setResult(null);
+    setError(null);
+  }, [scope]);
 
   useEffect(() => {
     if (result) {
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     }
   }, [result]);
+
+  useEffect(() => {
+    if (scope === "book") {
+      analysesApi.list({ project: projectId }).then(({ data }) => {
+        const items = (data.results ?? []).filter((a) => BOOK_TYPES.includes(a.analysis_type));
+        setHistory(items.slice(0, 10));
+      }).catch(() => {});
+    } else if (chapter) {
+      analysesApi.list({ chapter: chapter.id }).then(({ data }) => {
+        setHistory((data.results ?? []).slice(0, 10));
+      }).catch(() => {});
+    }
+  }, [scope, projectId, chapter?.id]);
 
   const toggleProfile = (slug: ReaderProfileSlug) => {
     setSelectedProfiles((prev) =>
@@ -178,13 +222,14 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
     try {
       const { data } = await analysesApi.run({
         project_id: projectId,
-        chapter_id: chapter?.id ?? null,
+        chapter_id: scope === "chapter" ? (chapter?.id ?? null) : null,
         analysis_type: selectedType,
         creative_request: creativeRequest,
-        reader_profiles: selectedType === "reader_simulation" ? selectedProfiles : undefined,
+        reader_profiles: isReaderType ? selectedProfiles : undefined,
         selected_text: requiresSelection ? selectedText : undefined,
       });
       setResult(data.analysis);
+      setHistory((prev) => [data.analysis, ...prev.slice(0, 9)]);
       updateCredits(data.credits_remaining);
       onCreditsUpdate?.(data.credits_remaining);
     } catch (err: unknown) {
@@ -205,16 +250,17 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
     }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="eyebrow">ANÁLISE COM IA</div>
+        <div className="eyebrow">
+          {scope === "book" ? "ANÁLISE DO LIVRO" : "ANÁLISE COM IA"}
+        </div>
         <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>escritor.ai</span>
       </div>
 
       {/* Analysis type cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {ANALYSIS_TYPES.map((a) => {
+        {analysisTypes.map((a) => {
           const active = a.id === selectedType;
-          const needsChapter = CHAPTER_REQUIRED.includes(a.id);
-          const disabled = needsChapter && !chapter;
+          const disabled = scope === "chapter" && CHAPTER_REQUIRED.includes(a.id) && !chapter;
           return (
             <div
               key={a.id}
@@ -230,14 +276,16 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
                 <div className="a-sub">{a.sub}</div>
               </div>
               <div className="a-cost">
-                {a.id === "reader_simulation" ? "1 cr./perfil" : `${ANALYSIS_COSTS[a.id]} cr.`}
+                {READER_TYPES.includes(a.id)
+                  ? `${a.id === "book_reader_simulation" ? 2 : 1} cr./perfil`
+                  : `${ANALYSIS_COSTS[a.id]} cr.`}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Selected text preview for local / local_context analysis */}
+      {/* Selected text preview */}
       {requiresSelection && (
         selectedText ? (
           <div style={{
@@ -275,7 +323,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
       )}
 
       {/* Reader profile picker */}
-      {selectedType === "reader_simulation" && (
+      {isReaderType && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div className="eyebrow">PERFIS DE LEITOR</div>
@@ -285,7 +333,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
                 background: "var(--mint-wash-soft)",
                 padding: "2px 8px", borderRadius: 4,
               }}>
-                {selectedProfiles.length} × 1 cr.
+                {selectedProfiles.length} × {creditPerProfile} cr.
               </span>
             )}
           </div>
@@ -335,6 +383,11 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               Selecione ao menos um perfil para continuar.
             </p>
           )}
+          {scope === "book" && (
+            <div style={{ fontSize: 11, color: "var(--ink-4)", padding: "6px 10px", background: "var(--card)", borderRadius: 6, lineHeight: 1.5 }}>
+              Cada perfil lê o manuscrito completo — resultado mais fiel que por capítulo.
+            </div>
+          )}
         </div>
       )}
 
@@ -358,12 +411,12 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
           Selecione um capítulo para usar este tipo de análise.
         </div>
       )}
-      {user && selectedType !== "reader_simulation" && user.user_plan.credits < cost && (
+      {user && !isReaderType && user.user_plan.credits < cost && (
         <div style={{ fontSize: 12, color: "var(--red)", textAlign: "center" }}>
           Créditos insuficientes para esta análise.
         </div>
       )}
-      {user && selectedType === "reader_simulation" && selectedProfiles.length > 0 && user.user_plan.credits < cost && (
+      {user && isReaderType && selectedProfiles.length > 0 && user.user_plan.credits < cost && (
         <div style={{ fontSize: 12, color: "var(--red)", textAlign: "center" }}>
           Créditos insuficientes ({cost} necessários).
         </div>
@@ -377,21 +430,13 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
         style={{ width: "100%", height: 44 }}
       >
         {loading ? (
-          <>
-            <LoadingDots /> Analisando…
-          </>
-        ) : selectedType === "reader_simulation" && selectedProfiles.length === 0 ? (
-          <>
-            <SparklesIcon /> Escolha os perfis
-          </>
+          <><LoadingDots /> Analisando…</>
+        ) : isReaderType && selectedProfiles.length === 0 ? (
+          <><SparklesIcon /> Escolha os perfis</>
         ) : requiresSelection && !selectedText ? (
-          <>
-            <SparklesIcon /> Selecione um trecho
-          </>
+          <><SparklesIcon /> Selecione um trecho</>
         ) : (
-          <>
-            <SparklesIcon /> Executar · {cost} crédito{cost !== 1 ? "s" : ""}
-          </>
+          <><SparklesIcon /> Executar · {cost} crédito{cost !== 1 ? "s" : ""}</>
         )}
       </Button>
 
@@ -402,7 +447,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
         </div>
       )}
 
-      {/* Placeholder - always visible when no result yet */}
+      {/* Placeholder */}
       {!result && !loading && (
         <div style={{ marginTop: "auto", padding: 14, background: "var(--card)", border: "1px solid var(--card-edge)", borderRadius: 12 }}>
           <div className="eyebrow" style={{ marginBottom: 10 }}>COMO FUNCIONA</div>
@@ -412,9 +457,9 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
         </div>
       )}
 
-      {/* Result */}
+      {/* Current result */}
       <div ref={resultRef}>
-        {result && result.analysis_type === "reader_simulation" ? (
+        {result && (result.analysis_type === "reader_simulation" || result.analysis_type === "book_reader_simulation") ? (
           <ReaderSimulationResult result={result} />
         ) : result ? (
           <div className="ai-result fade-in">
@@ -446,12 +491,56 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
         ) : null}
       </div>
 
+      {/* History */}
+      {history.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div className="eyebrow" style={{ marginTop: 8 }}>ANÁLISES ANTERIORES</div>
+          {history.map((a) => {
+            const isExpanded = expandedHistory === a.id;
+            const isReaderSim = a.analysis_type === "reader_simulation" || a.analysis_type === "book_reader_simulation";
+            return (
+              <div key={a.id} style={{ border: "1px solid var(--card-edge)", borderRadius: 8, overflow: "hidden" }}>
+                <button
+                  onClick={() => setExpandedHistory(isExpanded ? null : a.id)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 12px", background: "var(--card)", border: "none", cursor: "pointer",
+                    gap: 8, textAlign: "left",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--ink)", lineHeight: 1.3 }}>
+                      {a.analysis_type_display}
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--ink-4)", marginTop: 2, fontFamily: "var(--mono)" }}>
+                      {new Date(a.created_at).toLocaleDateString("pt-BR")} · {a.credits_consumed} cr.
+                      {a.chapter_title && <> · {a.chapter_title}</>}
+                    </div>
+                  </div>
+                  <ChevronIcon expanded={isExpanded} />
+                </button>
+                {isExpanded && (
+                  <div style={{ padding: "10px 12px", borderTop: "1px solid var(--card-edge)", background: "var(--paper)" }}>
+                    {isReaderSim ? (
+                      <ReaderSimulationResult result={a} compact />
+                    ) : (
+                      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
+                        {a.content}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Profile info modal */}
       {infoProfile && (() => {
         const p = READER_PROFILES.find((rp) => rp.slug === infoProfile)!;
         return (
           <Modal open title={p.name} onClose={() => setInfoProfile(null)} maxWidth={460}>
-            {/* Avatar + name + level */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <div style={{
                 width: 52, height: 52, borderRadius: "50%", flexShrink: 0,
@@ -474,7 +563,6 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               </div>
             </div>
 
-            {/* Reading style + genres */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
                 <div className="field-label" style={{ marginBottom: 4 }}>Estilo de leitura</div>
@@ -495,7 +583,6 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               </div>
             </div>
 
-            {/* Criteria + tone */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>
                 <div className="field-label" style={{ marginBottom: 4 }}>Critérios de avaliação</div>
@@ -507,7 +594,6 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               </div>
             </div>
 
-            {/* Bio */}
             <div style={{
               fontSize: 13, color: "var(--ink-3)", lineHeight: 1.65,
               paddingTop: 14, borderTop: "1px solid var(--card-edge-soft)",
@@ -516,7 +602,6 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               {p.bio}
             </div>
 
-            {/* Strengths */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {p.strengths.map((s) => (
                 <span key={s} style={{
@@ -535,15 +620,15 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
   );
 }
 
-function ReaderSimulationResult({ result }: { result: Analysis }) {
+function ReaderSimulationResult({ result, compact = false }: { result: Analysis; compact?: boolean }) {
   let parsed: Record<string, string> = {};
   try {
     parsed = JSON.parse(result.content);
   } catch {
     return (
-      <div className="ai-result fade-in">
+      <div className={compact ? "" : "ai-result fade-in"}>
         <div className="ai-result-body">
-          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.62, color: "var(--ink-2)" }}>
+          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: compact ? 12 : 14, lineHeight: 1.62, color: "var(--ink-2)" }}>
             {result.content}
           </pre>
         </div>
@@ -551,33 +636,33 @@ function ReaderSimulationResult({ result }: { result: Analysis }) {
     );
   }
 
-  const orderedSlugs = ["luna", "rafael", "camila", "mateus", "vera"];
+  const orderedSlugs = ["luna", "rafael", "camila", "mateus", "vera", "heitor"];
   const entries = orderedSlugs
     .filter((slug) => slug in parsed)
     .map((slug) => ({ slug, text: parsed[slug] }));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }} className="fade-in">
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{
-          width: 22, height: 22, borderRadius: 6,
-          background: "var(--ink)", color: "var(--mint)",
-          display: "grid", placeItems: "center",
-        }}>
-          <SparklesIcon />
-        </span>
-        <div>
-          <div className="serif" style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>
-            Simulação de Leitores
-          </div>
-          <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>
-            {result.ai_model} · {result.credits_consumed} cr.
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }} className={compact ? "" : "fade-in"}>
+      {!compact && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            width: 22, height: 22, borderRadius: 6,
+            background: "var(--ink)", color: "var(--mint)",
+            display: "grid", placeItems: "center",
+          }}>
+            <SparklesIcon />
+          </span>
+          <div>
+            <div className="serif" style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>
+              Simulação de Leitores
+            </div>
+            <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>
+              {result.ai_model} · {result.credits_consumed} cr.
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Per-profile results */}
       {entries.map(({ slug, text }) => {
         const p = READER_PROFILES.find((rp) => rp.slug === slug);
         if (!p) return null;
@@ -607,7 +692,7 @@ function ReaderSimulationResult({ result }: { result: Analysis }) {
               </div>
             </div>
             <div className="ai-result-body">
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)" }}>
+              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: compact ? 12 : 13, lineHeight: 1.65, color: "var(--ink-2)" }}>
                 {text}
               </pre>
             </div>
@@ -615,6 +700,18 @@ function ReaderSimulationResult({ result }: { result: Analysis }) {
         );
       })}
     </div>
+  );
+}
+
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ color: "var(--ink-4)", flexShrink: 0, transition: "transform .15s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
   );
 }
 
