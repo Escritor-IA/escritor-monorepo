@@ -17,7 +17,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   updateCredits: (credits) =>
     set((state) =>
-      state.user ? { user: { ...state.user, credits_balance: credits } } : {}
+      state.user
+        ? { user: { ...state.user, user_plan: { ...state.user.user_plan, credits } } }
+        : {}
     ),
 
   logout: () => {

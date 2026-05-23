@@ -7,10 +7,12 @@ interface PaginatedResponse<T> {
 }
 
 interface RunAnalysisPayload {
-  project_id: number;
-  chapter_id?: number | null;
+  project_id: string;
+  chapter_id?: string | null;
   analysis_type: AnalysisType;
   creative_request?: string;
+  reader_profiles?: string[];
+  selected_text?: string;
 }
 
 interface RunAnalysisResponse {
@@ -19,13 +21,13 @@ interface RunAnalysisResponse {
 }
 
 export const analysesApi = {
-  list: (params?: { project?: number; chapter?: number }) =>
+  list: (params?: { project?: string; chapter?: string }) =>
     client.get<PaginatedResponse<Analysis>>("/analyses/", { params }),
 
-  get: (id: number) => client.get<Analysis>(`/analyses/${id}/`),
+  get: (id: string) => client.get<Analysis>(`/analyses/${id}/`),
 
   run: (payload: RunAnalysisPayload) =>
     client.post<RunAnalysisResponse>("/analyses/run/", payload),
 
-  delete: (id: number) => client.delete(`/analyses/${id}/`),
+  delete: (id: string) => client.delete(`/analyses/${id}/`),
 };

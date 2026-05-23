@@ -68,20 +68,42 @@ def index_chapter(chapter) -> None:
         )
 
     ContextVector.objects.bulk_create(vectors)
-    logger.info("Indexed %d chunks for chapter %d", len(vectors), chapter.pk)
+    logger.info("Indexed %d chunks for chapter %s", len(vectors), chapter.pk)
 
 
-def retrieve_context(query_text: str, project, top_k: int = TOP_K) -> str:
+def index_project(project) -> None:
+    from apps.chapters.models import Chapter
+
+    chapters = Chapter.objects.filter(project=project)
+    for chapter in chapters:
+        index_chapter(chapter)
+    logger.info("Indexed all %d chapters for project %s", chapters.count(), project.pk)
+
+
+def retrieve_context(query_text: str, project, chapter=None, top_k: int = TOP_K) -> str:
     from apps.analyses.models import ContextVector
 
-    if not ContextVector.objects.filter(project=project).exists():
-        return ""
+    qs = (
+        ContextVector.objects.filter(chapter=chapter)
+        if chapter
+        else ContextVector.objects.filter(project=project)
+    )
+
+    if not qs.exists():
+        if chapter:
+            raise ValueError(
+                f"Capítulo '{chapter.title}' não possui conteúdo indexado. "
+                "Salve o capítulo antes de analisar."
+            )
+        raise ValueError(
+            "Nenhum capítulo do projeto foi indexado. "
+            "Salve o conteúdo antes de analisar."
+        )
 
     query_embedding = embed_text(query_text)
 
     results = (
-        ContextVector.objects
-        .filter(project=project)
+        qs
         .annotate(distance=CosineDistance("embedding", query_embedding))
         .order_by("distance")[:top_k]
     )

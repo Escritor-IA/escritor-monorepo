@@ -1,19 +1,36 @@
 import { useState, useEffect, type FormEvent, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import type { Project, Chapter } from "@/types";
+import { useParams, useNavigate } from "react-router-dom";
+import type { Project, Chapter, ProjectGenre, ProjectStatus } from "@/types";
 import { GENRE_LABELS } from "@/types";
+import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
+
+function formatGenres(genres: string[]): string {
+  if (!genres.length) return "Sem gênero";
+  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ");
+}
 import { projectsApi } from "@/api/projects";
 import { chaptersApi } from "@/api/chapters";
 import { Layout } from "@/components/Layout/Layout";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { Modal } from "@/components/UI/Modal";
-import { Spinner } from "@/components/UI/Spinner";
+import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
+
+const STATUS_CHIP: Record<ProjectStatus, string> = {
+  in_progress: "chip-progress",
+  completed: "chip-done",
+  paused: "chip-paused",
+};
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  in_progress: "Em andamento",
+  completed: "Concluído",
+  paused: "Pausado",
+};
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const projectId = Number(id);
+  const projectId = id!;
 
   const [project, setProject] = useState<Project | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -27,6 +44,10 @@ export function ProjectPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importTitle, setImportTitle] = useState("");
   const [importing, setImporting] = useState(false);
+
+  const [hoveredChapter, setHoveredChapter] = useState<string | null>(null);
+  const [deleteChapterTarget, setDeleteChapterTarget] = useState<Chapter | null>(null);
+  const [deletingChapter, setDeletingChapter] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,11 +67,7 @@ export function ProjectPage() {
     setCreatingChapter(true);
     try {
       const nextNumber = chapters.length > 0 ? Math.max(...chapters.map((c) => c.number)) + 1 : 1;
-      const { data } = await chaptersApi.create(projectId, {
-        number: nextNumber,
-        title: newTitle,
-        content: "",
-      });
+      const { data } = await chaptersApi.create(projectId, { number: nextNumber, title: newTitle, content: "" });
       setChapters((prev) => [...prev, data]);
       setNewChapterOpen(false);
       setNewTitle("");
@@ -75,17 +92,23 @@ export function ProjectPage() {
     }
   };
 
-  const handleDeleteChapter = async (chapter: Chapter) => {
-    if (!confirm(`Excluir "${chapter.title || `Capítulo ${chapter.number}`}"?`)) return;
-    await chaptersApi.delete(chapter.id);
-    setChapters((prev) => prev.filter((c) => c.id !== chapter.id));
+  const handleConfirmDeleteChapter = async () => {
+    if (!deleteChapterTarget) return;
+    setDeletingChapter(true);
+    try {
+      await chaptersApi.delete(deleteChapterTarget.id);
+      setChapters((prev) => prev.filter((c) => c.id !== deleteChapterTarget.id));
+      setDeleteChapterTarget(null);
+    } finally {
+      setDeletingChapter(false);
+    }
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center py-16">
-          <Spinner label="Carregando projeto..." />
+        <div style={{ textAlign: "center", padding: 64, color: "var(--ink-3)" }}>
+          Carregando projeto…
         </div>
       </Layout>
     );
@@ -94,155 +117,305 @@ export function ProjectPage() {
   if (!project) {
     return (
       <Layout>
-        <p className="text-center text-gray-500 py-16">Projeto não encontrado.</p>
+        <p style={{ textAlign: "center", color: "var(--ink-3)", padding: 64 }}>
+          Projeto não encontrado.
+        </p>
       </Layout>
     );
   }
 
+  const totalWords = chapters.reduce((a, c) => {
+    return a + (c.content ? c.content.trim().split(/\s+/).filter(Boolean).length : 0);
+  }, 0);
+
   return (
     <Layout>
-      <div className="mb-2">
-        <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-          ← Meus projetos
-        </Link>
-      </div>
+      {/* Breadcrumb */}
+      <button
+        onClick={() => navigate("/dashboard")}
+        style={{ fontSize: 13, color: "var(--ink-3)", display: "inline-flex", alignItems: "center", gap: 6 }}
+      >
+        <BackIcon /> Meus projetos
+      </button>
 
-      <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {GENRE_LABELS[project.genre]} · {chapters.length} capítulos
-          </p>
+      {/* Project header */}
+      <div style={{
+        display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+        gap: 24, flexWrap: "wrap", marginTop: 12, marginBottom: 28,
+      }}>
+        <div style={{ maxWidth: 700 }}>
+          <h1 className="serif" style={{
+            fontSize: 40, fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.08,
+            padding: "4px 0",
+          }}>
+            {project.title}
+          </h1>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 14, color: "var(--ink-3)", fontSize: 14 }}>
+            <span className={`chip ${STATUS_CHIP[project.status]}`}>
+              {STATUS_LABELS[project.status]}
+            </span>
+            <span>{formatGenres(project.genres)}</span>
+            <Dot />
+            <span>{chapters.length} capítulo{chapters.length !== 1 ? "s" : ""}</span>
+            {totalWords > 0 && (
+              <>
+                <Dot />
+                <span style={{ fontFamily: "var(--mono)" }}>{totalWords.toLocaleString("pt-BR")} palavras</span>
+              </>
+            )}
+          </div>
           {project.synopsis && (
-            <p className="text-sm text-gray-600 mt-2 max-w-xl">{project.synopsis}</p>
+            <p className="serif" style={{
+              marginTop: 18, color: "var(--ink-2)", fontSize: 17, lineHeight: 1.6,
+              borderLeft: "2px solid var(--green)", paddingLeft: 16,
+              fontStyle: "italic", maxWidth: 640,
+            }}>
+              "{project.synopsis}"
+            </p>
           )}
         </div>
-        <div className="flex gap-3">
+        <div style={{ display: "flex", gap: 10 }}>
           <Button variant="secondary" onClick={() => setImportOpen(true)}>
-            Importar arquivo
+            <UploadIcon /> Importar arquivo
           </Button>
-          <Button onClick={() => setNewChapterOpen(true)}>+ Novo capítulo</Button>
+          <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
+            <PlusIcon /> Novo capítulo
+          </Button>
         </div>
       </div>
 
+      {/* Two-column layout: chapters + book analysis */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 0, alignItems: "start", margin: "0 -24px" }}>
+      <div style={{ padding: "0 24px" }}>
+
+      {/* Chapters */}
       {chapters.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-400 mb-4">Nenhum capítulo ainda.</p>
-          <div className="flex justify-center gap-3">
+        <div className="card" style={{ padding: 64, textAlign: "center", color: "var(--ink-3)" }}>
+          <div className="serif" style={{ fontSize: 28, color: "var(--ink-2)", fontStyle: "italic", marginBottom: 8 }}>
+            A página em branco.
+          </div>
+          <div style={{ fontSize: 14, marginBottom: 20 }}>
+            Por onde começar? Importe um arquivo ou crie um capítulo do zero.
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
             <Button variant="secondary" onClick={() => setImportOpen(true)}>
-              Importar arquivo
+              <UploadIcon /> Importar
             </Button>
-            <Button onClick={() => setNewChapterOpen(true)}>Criar capítulo</Button>
+            <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
+              <PlusIcon /> Criar capítulo
+            </Button>
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
-          {chapters.map((chapter) => (
-            <div
-              key={chapter.id}
-              className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 p-4 hover:border-brand-300 hover:shadow-sm transition-all group"
-            >
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {chapters.map((chapter) => {
+            const hovered = hoveredChapter === chapter.id;
+            const words = chapter.content ? chapter.content.trim().split(/\s+/).filter(Boolean).length : 0;
+            const readMin = Math.max(1, Math.round(words / 250));
+            return (
               <div
-                className="flex-1 min-w-0 cursor-pointer"
+                key={chapter.id}
+                className="card"
+                onMouseEnter={() => setHoveredChapter(chapter.id)}
+                onMouseLeave={() => setHoveredChapter(null)}
+                style={{
+                  display: "grid", gridTemplateColumns: "48px 1fr auto auto", alignItems: "center", gap: 16,
+                  padding: "16px 20px", cursor: "pointer",
+                  transition: "all .15s ease",
+                  boxShadow: hovered ? "var(--sh-2)" : "var(--sh-1)",
+                  borderColor: hovered ? "var(--ink-4)" : "var(--card-edge)",
+                }}
                 onClick={() => navigate(`/chapters/${chapter.id}`)}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-400 w-8 shrink-0">
-                    {String(chapter.number).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900 truncate">
-                      {chapter.title || `Capítulo ${chapter.number}`}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {chapter.content
-                        ? `${chapter.content.trim().split(/\s+/).length} palavras · v${chapter.version}`
-                        : "Vazio"}
-                    </p>
+                <div className="mono" style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "right" }}>
+                  {String(chapter.number).padStart(2, "0")}
+                </div>
+                <div>
+                  <div className="serif" style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--ink)" }}>
+                    {chapter.title || `Capítulo ${chapter.number}`}
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 12, color: "var(--ink-3)", display: "flex", alignItems: "center", gap: 10 }}>
+                    {words > 0 ? (
+                      <>
+                        <span style={{ fontFamily: "var(--mono)" }}>{words.toLocaleString("pt-BR")} palavras</span>
+                        <Dot />
+                        <span>~{readMin} min de leitura</span>
+                        <Dot />
+                        <span>{new Date(chapter.updated_at).toLocaleDateString("pt-BR")}</span>
+                      </>
+                    ) : (
+                      <span style={{ fontStyle: "italic", color: "var(--ink-4)" }}>página em branco</span>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => handleDeleteChapter(chapter)}
-                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          ))}
+                {/* Word progress bar */}
+                <div style={{ width: 90, opacity: words ? 1 : 0.3 }}>
+                  <div className="score-bar">
+                    <div className="fill" style={{ width: Math.min(100, words / 50) + "%" }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteChapterTarget(chapter); }}
+                    style={{ opacity: hovered ? 1 : 0, transition: "opacity .12s ease", color: "var(--ink-4)", padding: 6 }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--red)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
+                  >
+                    <TrashIcon />
+                  </button>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: "rotate(180deg)", color: hovered ? "var(--ink)" : "var(--ink-4)", transition: "color .12s" }}>
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
+      </div>{/* end chapters column */}
+
+      {/* Book analysis panel */}
+      <div style={{ position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
+        <AnalysisPanel
+          projectId={projectId}
+          scope="book"
+        />
+      </div>
+
+      </div>{/* end two-column grid */}
+
+      {/* New chapter modal */}
       <Modal
         open={newChapterOpen}
         onClose={() => setNewChapterOpen(false)}
         title="Novo capítulo"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setNewChapterOpen(false)}>Cancelar</Button>
-            <Button loading={creatingChapter} onClick={handleCreateChapter}>Criar</Button>
+            <Button variant="ghost" onClick={() => setNewChapterOpen(false)}>Cancelar</Button>
+            <Button variant="primary" loading={creatingChapter} onClick={handleCreateChapter}>
+              Criar e abrir
+            </Button>
           </>
         }
       >
         <form onSubmit={handleCreateChapter}>
           <Input
             label="Título do capítulo (opcional)"
+            placeholder="Ex: O início da jornada"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Ex: O Início da Jornada"
             autoFocus
           />
         </form>
       </Modal>
 
+      {deleteChapterTarget && (
+        <ConfirmDialog
+          title={`Excluir "${deleteChapterTarget.title || `Capítulo ${deleteChapterTarget.number}`}"`}
+          description="Tem certeza que deseja excluir este capítulo? Esta ação não pode ser desfeita."
+          confirmLabel="Excluir capítulo"
+          danger
+          loading={deletingChapter}
+          onConfirm={handleConfirmDeleteChapter}
+          onCancel={() => setDeleteChapterTarget(null)}
+        />
+      )}
+
+      {/* Import modal */}
       <Modal
         open={importOpen}
         onClose={() => setImportOpen(false)}
         title="Importar arquivo"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setImportOpen(false)}>Cancelar</Button>
-            <Button loading={importing} disabled={!importFile} onClick={handleImport}>
+            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancelar</Button>
+            <Button variant="primary" loading={importing} disabled={!importFile} onClick={handleImport}>
               Importar
             </Button>
           </>
         }
       >
-        <form onSubmit={handleImport} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Arquivo (.txt, .docx, .pdf)
-            </label>
-            <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {importFile ? (
-                <p className="text-sm text-gray-700 font-medium">{importFile.name}</p>
-              ) : (
-                <p className="text-sm text-gray-400">Clique para selecionar um arquivo</p>
-              )}
-            </div>
+        <form onSubmit={handleImport} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <label
+            style={{
+              border: "1.5px dashed var(--card-edge)", borderRadius: 12,
+              padding: 28, textAlign: "center", color: "var(--ink-3)", fontSize: 14,
+              cursor: "pointer",
+            }}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--green)"; }}
+            onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--card-edge)"; }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.style.borderColor = "var(--card-edge)";
+              if (e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0]);
+            }}
+          >
+            {importFile ? (
+              <div>
+                <div style={{ color: "var(--ink)", fontWeight: 500 }}>{importFile.name}</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>
+                  {Math.round(importFile.size / 1024)} KB · pronto para importar
+                </div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
+                <div>Arraste seu .docx, .txt ou .pdf aqui</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>ou clique para selecionar</div>
+              </>
+            )}
             <input
               ref={fileInputRef}
               type="file"
               accept=".txt,.docx,.pdf"
-              className="hidden"
+              style={{ display: "none" }}
               onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
             />
-          </div>
-
+          </label>
           <Input
             label="Título do capítulo (opcional)"
+            placeholder="Deixe vazio para usar o nome do arquivo"
             value={importTitle}
             onChange={(e) => setImportTitle(e.target.value)}
-            placeholder="Deixe vazio para usar o nome do arquivo"
           />
         </form>
       </Modal>
     </Layout>
+  );
+}
+
+function Dot() {
+  return <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--ink-5)", display: "inline-block" }} />;
+}
+function BackIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+function PlusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+function UploadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" />
+    </svg>
   );
 }

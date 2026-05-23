@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/api/auth";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
+import { VerifyEmail } from "@/pages/VerifyEmail";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
@@ -33,6 +34,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route
             path="/dashboard"
             element={
