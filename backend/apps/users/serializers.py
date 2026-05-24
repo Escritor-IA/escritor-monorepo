@@ -124,6 +124,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        username_field = self.username_field
+        identifier = attrs.get(username_field, "")
+        try:
+            user = User.objects.get(email__iexact=identifier)
+            attrs[username_field] = user.username
+        except User.DoesNotExist:
+            pass
         data = super().validate(attrs)
         if not self.user.is_email_verified:
             raise serializers.ValidationError(

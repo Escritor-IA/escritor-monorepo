@@ -15,6 +15,9 @@ class Analysis(models.Model):
         ("total", "Análise Total"),
         ("reader_simulation", "Simulação de Leitores"),
         ("creative_suggestion", "Sugestão Criativa"),
+        ("book_general", "Análise Geral do Livro"),
+        ("book_total", "Análise Total do Livro"),
+        ("book_reader_simulation", "Simulação de Leitores — Livro"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

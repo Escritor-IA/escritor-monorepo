@@ -36,13 +36,11 @@ function formatGenres(genres: string[]): string {
 
 const STATUS_CHIP: Record<ProjectStatus, string> = {
   in_progress: "chip-progress",
-  completed: "chip-done",
-  paused: "chip-paused",
+  archived: "chip-paused",
 };
 const STATUS_LABELS: Record<ProjectStatus, string> = {
-  in_progress: "Em andamento",
-  completed: "Concluído",
-  paused: "Pausado",
+  in_progress: "Ativo",
+  archived: "Arquivado",
 };
 
 // ── Sortable chapter card ──────────────────────────────────────
@@ -277,6 +275,10 @@ export function ProjectPage() {
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
   const [projectTitleDraft, setProjectTitleDraft] = useState("");
 
+  // Project synopsis inline edit
+  const [editingSynopsis, setEditingSynopsis] = useState(false);
+  const [synopsisDraft, setSynopsisDraft] = useState("");
+
   // Chapter title inline edit
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [chapterTitleDraft, setChapterTitleDraft] = useState("");
@@ -325,6 +327,19 @@ export function ProjectPage() {
     setEditingProjectTitle(false);
     if (!project || !projectTitleDraft.trim() || projectTitleDraft.trim() === project.title) return;
     const { data } = await projectsApi.update(projectId, { title: projectTitleDraft.trim() });
+    setProject(data);
+  };
+
+  const handleStartEditSynopsis = () => {
+    if (!project) return;
+    setSynopsisDraft(project.synopsis ?? "");
+    setEditingSynopsis(true);
+  };
+
+  const handleSaveSynopsis = async () => {
+    setEditingSynopsis(false);
+    if (!project || synopsisDraft === (project.synopsis ?? "")) return;
+    const { data } = await projectsApi.update(projectId, { synopsis: synopsisDraft });
     setProject(data);
   };
 
@@ -506,15 +521,49 @@ export function ProjectPage() {
             )}
           </div>
 
-          {project.synopsis && (
-            <p className="serif" style={{
-              marginTop: 18, color: "var(--ink-2)", fontSize: 17, lineHeight: 1.6,
-              borderLeft: "2px solid var(--green)", paddingLeft: 16,
-              fontStyle: "italic", maxWidth: 640,
-            }}>
-              "{project.synopsis}"
-            </p>
-          )}
+          <div style={{ marginTop: 18, maxWidth: 640 }}>
+            {editingSynopsis ? (
+              <input
+                value={synopsisDraft}
+                onChange={(e) => setSynopsisDraft(e.target.value)}
+                onBlur={handleSaveSynopsis}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveSynopsis();
+                  if (e.key === "Escape") setEditingSynopsis(false);
+                }}
+                autoFocus
+                placeholder="Adicione uma sinopse…"
+                style={{
+                  fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.6,
+                  fontStyle: "italic", color: "var(--ink-2)",
+                  background: "transparent", border: "none", outline: "none",
+                  width: "100%", maxWidth: 640, padding: "4px 0",
+                  borderBottom: "2px solid var(--green)",
+                }}
+              />
+            ) : (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                {project.synopsis ? (
+                  <p className="serif" style={{ color: "var(--ink-2)", fontSize: 17, lineHeight: 1.6, fontStyle: "italic" }}>
+                    "{project.synopsis}"
+                  </p>
+                ) : (
+                  <p className="serif" style={{ color: "var(--ink-4)", fontSize: 15, lineHeight: 1.6, fontStyle: "italic" }}>
+                    Adicionar sinopse…
+                  </p>
+                )}
+                <button
+                  title="Editar sinopse"
+                  onClick={handleStartEditSynopsis}
+                  style={{ color: "var(--ink-4)", marginTop: 3, padding: 4, flexShrink: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-2)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
+                >
+                  <PencilIcon />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

@@ -13,9 +13,8 @@ class Project(models.Model):
         "historical", "biography", "self_help", "other",
     ]
     STATUS_CHOICES = [
-        ("in_progress", "Em Andamento"),
-        ("completed", "Concluído"),
-        ("paused", "Pausado"),
+        ("in_progress", "Ativo"),
+        ("archived", "Arquivado"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

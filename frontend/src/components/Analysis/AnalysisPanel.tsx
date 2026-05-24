@@ -135,14 +135,14 @@ const READER_PROFILES: ReaderProfile[] = [
 const CHAPTER_ANALYSIS_TYPES: { id: AnalysisType; label: string; sub: string; icon: string }[] = [
   { id: "local", label: "Análise Local", sub: "Trecho selecionado. Estilo, ritmo, palavras repetidas.", icon: "target" },
   { id: "local_context", label: "Análise Narrativa", sub: "Trecho + contexto do capítulo. Coerência narrativa.", icon: "layers" },
-  { id: "general_context", label: "Análise Geral", sub: "Capítulo inteiro via RAG. Arco, conflito, personagem.", icon: "book" },
+  { id: "general_context", label: "Análise Geral", sub: "Contexto do Capítulo. Arco, conflito, personagem.", icon: "book" },
   { id: "total", label: "Análise Total", sub: "Capítulo completo em texto bruto. Visão detalhada.", icon: "brain" },
   { id: "reader_simulation", label: "Simulação de Leitores", sub: "Escolha os perfis que vão reagir ao capítulo.", icon: "users" },
   { id: "creative_suggestion", label: "Sugestão Criativa", sub: "Direções, viradas, possíveis caminhos.", icon: "lightbulb" },
 ];
 
 const BOOK_ANALYSIS_TYPES: { id: AnalysisType; label: string; sub: string; icon: string }[] = [
-  { id: "book_general", label: "Análise Geral do Livro", sub: "Livro inteiro via RAG. Estrutura, arco, personagens.", icon: "book" },
+  { id: "book_general", label: "Análise Geral do Livro", sub: "Contexto do Livro Inteiro. Estrutura, arco, personagens.", icon: "book" },
   { id: "book_total", label: "Análise Total do Livro", sub: "Manuscrito completo em texto bruto. Visão de obra.", icon: "brain" },
   { id: "book_reader_simulation", label: "Simulação de Leitores", sub: "Perfis lendo o livro inteiro. Mais preciso que por capítulo.", icon: "users" },
 ];

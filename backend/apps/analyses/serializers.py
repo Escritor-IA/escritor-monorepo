@@ -21,7 +21,7 @@ class AnalysisSerializer(serializers.ModelSerializer):
         return None
 
 
-VALID_READER_PROFILES = ["luna", "rafael", "camila", "mateus", "vera"]
+VALID_READER_PROFILES = ["luna", "rafael", "camila", "mateus", "vera", "heitor"]
 
 
 class RequestAnalysisSerializer(serializers.Serializer):
@@ -30,6 +30,7 @@ class RequestAnalysisSerializer(serializers.Serializer):
     analysis_type = serializers.ChoiceField(choices=[
         "local", "local_context", "general_context", "total",
         "reader_simulation", "creative_suggestion",
+        "book_general", "book_total", "book_reader_simulation",
     ])
     reader_profiles = serializers.ListField(
         child=serializers.ChoiceField(choices=VALID_READER_PROFILES),
@@ -40,6 +41,6 @@ class RequestAnalysisSerializer(serializers.Serializer):
     selected_text = serializers.CharField(required=False, allow_blank=True, default="")
 
     def validate(self, data):
-        if data["analysis_type"] == "reader_simulation" and not data.get("reader_profiles"):
+        if data["analysis_type"] in ("reader_simulation", "book_reader_simulation") and not data.get("reader_profiles"):
             raise serializers.ValidationError({"reader_profiles": "Selecione ao menos um perfil de leitor."})
         return data

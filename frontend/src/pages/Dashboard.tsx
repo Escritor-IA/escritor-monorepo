@@ -17,14 +17,12 @@ import { useAuthStore } from "@/store/authStore";
 
 const STATUS_CHIP: Record<ProjectStatus, string> = {
   in_progress: "chip-progress",
-  completed: "chip-done",
-  paused: "chip-paused",
+  archived: "chip-paused",
 };
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
-  in_progress: "Em andamento",
-  completed: "Concluído",
-  paused: "Pausado",
+  in_progress: "Ativo",
+  archived: "Arquivado",
 };
 
 const DEFAULT_FORM = {
@@ -92,11 +90,17 @@ export function Dashboard() {
     }
   };
 
+  const handleToggleArchive = async (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus: ProjectStatus = project.status === "archived" ? "in_progress" : "archived";
+    const { data } = await projectsApi.update(project.id, { status: newStatus });
+    setProjects((prev) => prev.map((p) => (p.id === project.id ? data : p)));
+  };
+
   const filters: [Filter, string][] = [
     ["all", "Todos"],
-    ["in_progress", "Em andamento"],
-    ["completed", "Concluídos"],
-    ["paused", "Pausados"],
+    ["in_progress", "Ativos"],
+    ["archived", "Arquivados"],
   ];
 
   return (
@@ -119,9 +123,6 @@ export function Dashboard() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <Button variant="secondary">
-            <UploadIcon /> Importar manuscrito
-          </Button>
           <Button variant="primary" onClick={() => setModalOpen(true)}>
             <PlusIcon /> Novo projeto
           </Button>
@@ -192,18 +193,34 @@ export function Dashboard() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <div className="eyebrow" style={{ fontSize: 10 }}>{formatGenres(project.genres)}</div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
-                    style={{
-                      opacity: hovered ? 1 : 0,
-                      color: "var(--ink-4)", padding: 4,
-                      transition: "opacity .15s ease, color .15s ease",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--red)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
-                  >
-                    <TrashIcon />
-                  </button>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    <button
+                      onClick={(e) => handleToggleArchive(project, e)}
+                      title={project.status === "archived" ? "Restaurar projeto" : "Arquivar projeto"}
+                      style={{
+                        opacity: hovered ? 1 : 0,
+                        color: "var(--ink-4)", padding: 4,
+                        transition: "opacity .15s ease, color .15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
+                    >
+                      {project.status === "archived" ? <UnarchiveIcon /> : <ArchiveIcon />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
+                      title="Excluir projeto"
+                      style={{
+                        opacity: hovered ? 1 : 0,
+                        color: "var(--ink-4)", padding: 4,
+                        transition: "opacity .15s ease, color .15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--red)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-4)")}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="serif" style={{
@@ -406,14 +423,6 @@ function PlusIcon() {
   );
 }
 
-function UploadIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-    </svg>
-  );
-}
-
 function TrashIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -426,6 +435,28 @@ function ClockIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function ArchiveIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="4" rx="1" />
+      <path d="M4 7v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7" />
+      <path d="M10 12l2 2 2-2" />
+      <path d="M12 12v-4" />
+    </svg>
+  );
+}
+
+function UnarchiveIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="4" rx="1" />
+      <path d="M4 7v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7" />
+      <path d="M10 14l2-2 2 2" />
+      <path d="M12 12v4" />
     </svg>
   );
 }

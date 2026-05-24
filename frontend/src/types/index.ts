@@ -31,7 +31,7 @@ export type ProjectGenre =
   | "self_help"
   | "other";
 
-export type ProjectStatus = "in_progress" | "completed" | "paused";
+export type ProjectStatus = "in_progress" | "archived";
 
 export interface Project {
   id: string;
