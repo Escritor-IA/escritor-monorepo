@@ -360,3 +360,120 @@ body::before {
 .hl-mint { background: var(--mint-wash); padding: 0 2px; border-radius: 2px; }
 .hl-amber { background: var(--amber-wash); padding: 0 2px; border-radius: 2px; }
 .hl-red { background: var(--red-wash); padding: 0 2px; border-radius: 2px; }
+
+/* ---- Chapter Editor (Tiptap) ---- */
+.chapter-editor { width: 100%; }
+
+.chapter-editor .ProseMirror {
+  outline: none;
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.72;
+  color: var(--ink);
+  hyphens: auto;
+  word-break: break-word;
+}
+
+.chapter-editor .ProseMirror p {
+  margin-bottom: 18px;
+}
+
+.chapter-editor .ProseMirror h1 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 36px 0 14px;
+  line-height: 1.25;
+}
+
+.chapter-editor .ProseMirror h2 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  margin: 28px 0 10px;
+  line-height: 1.3;
+}
+
+.chapter-editor .ProseMirror blockquote {
+  margin: 22px 0;
+  padding: 0 0 0 20px;
+  border-left: 2px solid var(--green);
+  font-style: italic;
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.chapter-editor .ProseMirror blockquote p { margin-bottom: 0; }
+
+.chapter-editor .ProseMirror strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chapter-editor .ProseMirror em {
+  font-style: italic;
+}
+
+/* Placeholder */
+.chapter-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--ink-4);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* Selection */
+.chapter-editor .ProseMirror ::selection {
+  background: var(--mint-wash);
+}
+
+/* ---- Bubble menu (floating toolbar) ---- */
+.bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 10px;
+  box-shadow: var(--sh-3);
+  padding: 4px;
+}
+
+.bubble-menu button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--ink-2);
+  transition: background .1s ease, color .1s ease;
+}
+
+.bubble-menu button:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.bubble-menu button.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.bubble-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--card-edge);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
