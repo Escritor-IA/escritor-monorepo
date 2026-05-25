@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Routes, Route } from "react-router-dom";
+import NotFound from "./pages/NotFound";
 import logo from "./assets/logo.png";
 
 const APP_URL = import.meta.env.VITE_APP_URL ?? "http://localhost:5173";
@@ -605,8 +607,8 @@ function Footer() {
   );
 }
 
-/* ============ APP ============ */
-export default function App() {
+/* ============ LANDING ============ */
+function Landing() {
   return (
     <>
       <Nav />
@@ -617,5 +619,15 @@ export default function App() {
       <FinalCTA />
       <Footer />
     </>
+  );
+}
+
+/* ============ APP ============ */
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }

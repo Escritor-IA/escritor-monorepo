@@ -5,6 +5,7 @@ Logic lives here — views just delegate to this service.
 import logging
 import os
 
+from apps.users.plans import get_plan_limits
 from .groq_client import chat_completion, GROQ_MODEL
 from .rag import index_chapter, index_project, retrieve_context
 from .prompts import (
@@ -51,8 +52,35 @@ def _truncate(text: str, max_chars: int = _MANUSCRIPT_TOKEN_LIMIT) -> str:
     return text[:max_chars] + "\n\n[Texto truncado para análise — manuscrito longo]"
 
 
+def _enforce_plan_limits(user, analysis_type: str, reader_profiles: list) -> None:
+    """Defense-in-depth: raises ValueError if the user's plan forbids this operation."""
+    plan_limits = get_plan_limits(user.user_plan.plan)
+
+    if analysis_type in plan_limits["blocked_analysis_types"]:
+        raise ValueError("Este tipo de análise não está disponível no seu plano.")
+
+    if analysis_type in ("reader_simulation", "book_reader_simulation"):
+        allowed = plan_limits["allowed_reader_profiles"]
+        if allowed is not None:
+            forbidden = [p for p in reader_profiles if p not in allowed]
+            if forbidden:
+                raise ValueError(
+                    f"Perfis não disponíveis no seu plano: {', '.join(forbidden)}."
+                )
+
+        weekly_limit = plan_limits["reader_simulation_weekly_limit"]
+        if weekly_limit is not None:
+            used = user.user_plan.count_reader_simulations_this_week()
+            if used >= weekly_limit:
+                raise ValueError(
+                    f"Você atingiu o limite de {weekly_limit} simulações de leitores por semana."
+                )
+
+
 def run_analysis(user, project, chapter=None, analysis_type: str = "local", creative_request: str = "", reader_profiles: list = None, selected_text: str = "") -> dict:
     from apps.analyses.models import Analysis
+
+    _enforce_plan_limits(user, analysis_type, reader_profiles or [])
 
     if analysis_type in ("reader_simulation", "book_reader_simulation"):
         profiles = reader_profiles or []

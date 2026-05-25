@@ -6,8 +6,10 @@ import { projectsApi } from "@/api/projects";
 import { chaptersApi } from "@/api/chapters";
 import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
 import { Layout } from "@/components/Layout/Layout";
+import { ResourceNotFound } from "@/components/UI/ResourceNotFound";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Modal } from "@/components/UI/Modal";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
 import { countWords, exportBookDocx, exportBookPdf } from "@/utils/export";
@@ -75,6 +77,15 @@ function SortableChapterCard({
 
   const words = countWords(chapter.content);
   const readMin = Math.max(1, Math.round(words / 250));
+  const { chapterWordLimit } = usePlanLimits();
+  // For premium (no limit) use 3000 as a visual reference only
+  const barTarget = chapterWordLimit ?? 3_000;
+  const barPct = Math.min(100, (words / barTarget) * 100);
+  const barColor =
+    chapterWordLimit === null ? "var(--green)"
+    : barPct >= 100 ? "var(--red)"
+    : barPct >= 75 ? "var(--amber)"
+    : "var(--green)";
 
   return (
     <div
@@ -183,7 +194,7 @@ function SortableChapterCard({
         {/* Progress bar */}
         <div style={{ width: 90, opacity: words ? 1 : 0.3 }}>
           <div className="score-bar">
-            <div className="fill" style={{ width: Math.min(100, words / 50) + "%" }} />
+            <div className="fill" style={{ width: barPct + "%", background: barColor }} />
           </div>
         </div>
 
@@ -270,6 +281,7 @@ export function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   // Project title inline edit
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
@@ -312,7 +324,10 @@ export function ProjectPage() {
         setChapters(list.sort((a, b) => a.number - b.number));
         setLoading(false);
       }
-    );
+    ).catch(() => {
+      setNotFound(true);
+      setLoading(false);
+    });
   }, [projectId]);
 
   // ── Project title ──────────────────────────────────────────
@@ -441,13 +456,17 @@ export function ProjectPage() {
     );
   }
 
-  if (!project) {
+  if (notFound || !project) {
     return (
-      <Layout>
-        <p style={{ textAlign: "center", color: "var(--ink-3)", padding: 64 }}>
-          Projeto não encontrado.
-        </p>
-      </Layout>
+      <ResourceNotFound
+        eyebrow="ERRO 404 · PROJETO NÃO ENCONTRADO"
+        title="Este projeto"
+        titleEm="nunca foi escrito."
+        description="O projeto que você buscou não existe no nosso manuscrito. Talvez tenha sido removido ou o link esteja errado."
+        backLabel="← Voltar ao dashboard"
+        backTo="/dashboard"
+        cardLabel="PROJETO Nº 404"
+      />
     );
   }
 

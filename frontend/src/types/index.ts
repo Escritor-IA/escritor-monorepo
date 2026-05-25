@@ -124,3 +124,25 @@ export const ANALYSIS_COSTS: Record<AnalysisType, number> = {
   book_total: 6,
   book_reader_simulation: 2,
 };
+
+export const PLAN_LABELS: Record<"free" | "basic" | "premium", string> = {
+  free: "Rascunho",
+  basic: "Autor",
+  premium: "Obra Completa",
+};
+
+// Minimum plan required to run each analysis type (absence = free)
+export const ANALYSIS_MIN_PLAN: Partial<Record<AnalysisType, "basic" | "premium">> = {
+  total: "basic",
+  book_total: "basic",
+};
+
+// Minimum plan required per reader profile slug
+export const PROFILE_MIN_PLAN: Record<string, "free" | "basic" | "premium"> = {
+  luna: "free",
+  rafael: "basic",
+  camila: "basic",
+  mateus: "premium",
+  vera: "premium",
+  heitor: "premium",
+};

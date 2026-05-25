@@ -8,6 +8,7 @@ import { VerifyEmail } from "@/pages/VerifyEmail";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
+import { NotFound } from "@/pages/NotFound";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthStore();
@@ -60,7 +61,7 @@ export default function App() {
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

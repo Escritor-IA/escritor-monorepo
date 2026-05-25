@@ -37,7 +37,7 @@ class RunAnalysisView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = RequestAnalysisSerializer(data=request.data)
+        serializer = RequestAnalysisSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 

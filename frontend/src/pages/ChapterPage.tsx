@@ -8,6 +8,8 @@ import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
 import { ChapterEditor } from "@/components/Editor/ChapterEditor";
 import { Button } from "@/components/UI/Button";
 import { exportChapterDocx, exportChapterPdf } from "@/utils/export";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { ResourceNotFound } from "@/components/UI/ResourceNotFound";
 
 function formatGenres(genres: string[]): string {
   if (!genres.length) return "FICÇÃO";
@@ -24,6 +26,7 @@ export function ChapterPage() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
@@ -46,6 +49,9 @@ export function ChapterPage() {
       return projectsApi.get(data.project);
     }).then(({ data }) => {
       setProject(data);
+      setLoading(false);
+    }).catch(() => {
+      setNotFound(true);
       setLoading(false);
     });
   }, [chapterId]);
@@ -141,6 +147,15 @@ export function ChapterPage() {
   const readingMin = Math.max(1, Math.round(wordCount / 250));
   const fmt = (d: Date) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
+  const planLimits = usePlanLimits();
+  const wordLimit = planLimits.chapterWordLimit;
+  const wordLimitPct = wordLimit ? wordCount / wordLimit : null;
+  const wordLimitColor =
+    wordLimitPct === null ? "var(--ink)"
+    : wordLimitPct >= 1 ? "var(--red)"
+    : wordLimitPct >= 0.85 ? "var(--amber)"
+    : "var(--ink)";
+
   // Outline — extract headings from HTML
   const outline = useMemo(() => {
     if (!content) return [];
@@ -168,11 +183,17 @@ export function ChapterPage() {
     );
   }
 
-  if (!chapter || !project) {
+  if (notFound || !chapter || !project) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--paper)", color: "var(--ink-3)" }}>
-        Capítulo não encontrado.
-      </div>
+      <ResourceNotFound
+        eyebrow="ERRO 404 · CAPÍTULO NÃO ENCONTRADO"
+        title="Este capítulo"
+        titleEm="nunca foi escrito."
+        description="O capítulo que você buscou não existe no nosso manuscrito. Talvez tenha sido removido ou o link esteja errado."
+        backLabel="← Voltar ao dashboard"
+        backTo="/dashboard"
+        cardLabel="CAPÍTULO Nº 404"
+      />
     );
   }
 
@@ -388,10 +409,27 @@ export function ChapterPage() {
             display: "flex", justifyContent: "space-between", alignItems: "center",
             fontSize: 12, color: "var(--ink-3)", pointerEvents: "none",
           }}>
-            <div className="mono" style={{ display: "flex", gap: 18 }}>
-              <span><strong style={{ color: "var(--ink)" }}>{wordCount.toLocaleString("pt-BR")}</strong> palavras</span>
+            <div className="mono" style={{ display: "flex", gap: 18, alignItems: "center" }}>
+              <span>
+                <strong style={{ color: wordLimitColor }}>{wordCount.toLocaleString("pt-BR")}</strong>
+                {wordLimit ? (
+                  <> / <span style={{ color: "var(--ink-4)" }}>{wordLimit.toLocaleString("pt-BR")}</span> palavras</>
+                ) : (
+                  <> palavras</>
+                )}
+              </span>
               <span><strong style={{ color: "var(--ink)" }}>{charCount.toLocaleString("pt-BR")}</strong> caracteres</span>
               <span>~<strong style={{ color: "var(--ink)" }}>{readingMin} min</strong> de leitura</span>
+              {wordLimitPct !== null && wordLimitPct >= 0.85 && (
+                <span style={{
+                  color: wordLimitPct >= 1 ? "var(--red)" : "var(--amber)",
+                  pointerEvents: "auto",
+                }}>
+                  {wordLimitPct >= 1
+                    ? "⚠ Limite do plano atingido"
+                    : `${Math.round(wordLimitPct * 100)}% do limite`}
+                </span>
+              )}
             </div>
             <div style={{ fontStyle: "italic", fontFamily: "var(--serif)", fontSize: 13, color: "var(--ink-4)" }}>
               "Escrever é o ato de coragem mais barato que existe."

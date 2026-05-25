@@ -3,8 +3,10 @@ import type { Analysis, AnalysisType, Chapter } from "@/types";
 import { ANALYSIS_COSTS } from "@/types";
 import { analysesApi } from "@/api/analyses";
 import { useAuthStore } from "@/store/authStore";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/UI/Button";
 import { Modal } from "@/components/UI/Modal";
+import { UpgradeModal } from "@/components/UI/UpgradeModal";
 
 interface AnalysisPanelProps {
   projectId: string;
@@ -154,6 +156,7 @@ const BOOK_TYPES: AnalysisType[] = ["book_general", "book_total", "book_reader_s
 
 export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdate, scope = "chapter" }: AnalysisPanelProps) {
   const { user, updateCredits } = useAuthStore();
+  const planLimits = usePlanLimits();
   const analysisTypes = scope === "book" ? BOOK_ANALYSIS_TYPES : CHAPTER_ANALYSIS_TYPES;
   const defaultType = analysisTypes[0].id;
 
@@ -166,6 +169,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Analysis[]>([]);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
+  const [upgradeModal, setUpgradeModal] = useState<{ featureName: string; requiredPlan: string } | null>(null);
 
   const isReaderType = READER_TYPES.includes(selectedType);
   const requiresChapter = scope === "chapter" && CHAPTER_REQUIRED.includes(selectedType);
@@ -178,6 +182,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
     : ANALYSIS_COSTS[selectedType] ?? 1;
 
   const canRun = !!user &&
+    planLimits.isAnalysisTypeAllowed(selectedType) &&
     (!requiresChapter || !!chapter) &&
     (!requiresSelection || !!selectedText) &&
     (!isReaderType ? user.user_plan.credits >= cost : selectedProfiles.length > 0 && user.user_plan.credits >= cost);
@@ -208,7 +213,23 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
     }
   }, [scope, projectId, chapter?.id]);
 
+  const handleSelectAnalysisType = (id: AnalysisType) => {
+    const min = planLimits.minPlanForAnalysis(id);
+    if (min) {
+      const found = analysisTypes.find((a) => a.id === id);
+      setUpgradeModal({ featureName: found?.label ?? id, requiredPlan: min });
+      return;
+    }
+    setSelectedType(id);
+  };
+
   const toggleProfile = (slug: ReaderProfileSlug) => {
+    if (!planLimits.isProfileAllowed(slug)) {
+      const min = planLimits.minPlanForProfile(slug);
+      const p = READER_PROFILES.find((rp) => rp.slug === slug);
+      setUpgradeModal({ featureName: p?.name ?? slug, requiredPlan: min! });
+      return;
+    }
     setSelectedProfiles((prev) =>
       prev.includes(slug) ? prev.filter((p) => p !== slug) : [...prev, slug]
     );
@@ -260,25 +281,46 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {analysisTypes.map((a) => {
           const active = a.id === selectedType;
-          const disabled = scope === "chapter" && CHAPTER_REQUIRED.includes(a.id) && !chapter;
+          const disabledByChapter = scope === "chapter" && CHAPTER_REQUIRED.includes(a.id) && !chapter;
+          const locked = !planLimits.isAnalysisTypeAllowed(a.id);
+          const minPlan = planLimits.minPlanForAnalysis(a.id);
+
           return (
             <div
               key={a.id}
-              className={`analysis-card${active ? " active" : ""}`}
-              onClick={() => !disabled && setSelectedType(a.id)}
-              style={{ opacity: disabled ? 0.4 : 1, cursor: disabled ? "not-allowed" : "pointer" }}
+              className={`analysis-card${active && !locked ? " active" : ""}`}
+              onClick={() => !disabledByChapter && handleSelectAnalysisType(a.id)}
+              style={{
+                opacity: disabledByChapter ? 0.4 : locked ? 0.6 : 1,
+                cursor: disabledByChapter ? "not-allowed" : "pointer",
+                position: "relative",
+              }}
             >
-              <div style={{ width: 22, height: 22, color: "var(--ink)" }}>
-                <TypeIcon name={a.icon} />
+              <div style={{ width: 22, height: 22, color: locked ? "var(--ink-4)" : "var(--ink)" }}>
+                {locked ? <LockIcon size={14} /> : <TypeIcon name={a.icon} />}
               </div>
               <div>
-                <div className="a-title">{a.label}</div>
+                <div className="a-title" style={{ color: locked ? "var(--ink-3)" : undefined }}>
+                  {a.label}
+                </div>
                 <div className="a-sub">{a.sub}</div>
               </div>
-              <div className="a-cost">
-                {READER_TYPES.includes(a.id)
-                  ? `${a.id === "book_reader_simulation" ? 2 : 1} cr./perfil`
-                  : `${ANALYSIS_COSTS[a.id]} cr.`}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <div className="a-cost">
+                  {READER_TYPES.includes(a.id)
+                    ? `${a.id === "book_reader_simulation" ? 2 : 1} cr./perfil`
+                    : `${ANALYSIS_COSTS[a.id]} cr.`}
+                </div>
+                {locked && minPlan && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, fontFamily: "var(--mono)",
+                    letterSpacing: "0.06em", textTransform: "uppercase",
+                    color: "var(--amber)", background: "var(--amber-wash)",
+                    padding: "2px 6px", borderRadius: 4,
+                  }}>
+                    {minPlan}
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -340,24 +382,53 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {READER_PROFILES.map((p) => {
               const active = selectedProfiles.includes(p.slug);
+              const locked = !planLimits.isProfileAllowed(p.slug);
+              const minPlan = planLimits.minPlanForProfile(p.slug);
+
               return (
                 <div
                   key={p.slug}
                   className={`reader-card${active ? " active" : ""}`}
                   onClick={() => toggleProfile(p.slug)}
+                  style={{ opacity: locked ? 0.55 : 1, position: "relative" }}
                 >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    background: p.avatarBg, color: p.avatarColor,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 600, flexShrink: 0,
-                    fontFamily: "var(--mono)",
-                  }}>
-                    {p.initials}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: "50%",
+                      background: p.avatarBg, color: p.avatarColor,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, fontWeight: 600,
+                      fontFamily: "var(--mono)",
+                      filter: locked ? "grayscale(0.4)" : undefined,
+                    }}>
+                      {p.initials}
+                    </div>
+                    {locked && (
+                      <div style={{
+                        position: "absolute", inset: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        borderRadius: "50%",
+                        background: "rgba(246,243,235,0.55)",
+                      }}>
+                        <LockIcon size={12} />
+                      </div>
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", lineHeight: 1.3 }}>
-                      {p.name}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: locked ? "var(--ink-3)" : "var(--ink)", lineHeight: 1.3 }}>
+                        {p.name}
+                      </span>
+                      {locked && minPlan && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 600, fontFamily: "var(--mono)",
+                          letterSpacing: "0.06em", textTransform: "uppercase",
+                          color: "var(--amber)", background: "var(--amber-wash)",
+                          padding: "1px 5px", borderRadius: 3, flexShrink: 0,
+                        }}>
+                          {minPlan}
+                        </span>
+                      )}
                     </div>
                     <div style={{
                       fontSize: 11, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4,
@@ -382,6 +453,15 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
             <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center", paddingTop: 2 }}>
               Selecione ao menos um perfil para continuar.
             </p>
+          )}
+          {planLimits.weeklySimLimit !== null && (
+            <div style={{
+              fontSize: 11, color: "var(--amber)",
+              padding: "6px 10px", background: "var(--amber-wash)",
+              borderRadius: 6, lineHeight: 1.5,
+            }}>
+              Plano {planLimits.planLabel}: limite de {planLimits.weeklySimLimit} simulações por semana.
+            </div>
           )}
           {scope === "book" && (
             <div style={{ fontSize: 11, color: "var(--ink-4)", padding: "6px 10px", background: "var(--card)", borderRadius: 6, lineHeight: 1.5 }}>
@@ -411,7 +491,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
           Selecione um capítulo para usar este tipo de análise.
         </div>
       )}
-      {user && !isReaderType && user.user_plan.credits < cost && (
+      {user && !isReaderType && user.user_plan.credits < cost && planLimits.isAnalysisTypeAllowed(selectedType) && (
         <div style={{ fontSize: 12, color: "var(--red)", textAlign: "center" }}>
           Créditos insuficientes para esta análise.
         </div>
@@ -431,6 +511,8 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
       >
         {loading ? (
           <><LoadingDots /> Analisando…</>
+        ) : !planLimits.isAnalysisTypeAllowed(selectedType) ? (
+          <><LockIcon size={14} /> Análise bloqueada no seu plano</>
         ) : isReaderType && selectedProfiles.length === 0 ? (
           <><SparklesIcon /> Escolha os perfis</>
         ) : requiresSelection && !selectedText ? (
@@ -616,6 +698,16 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
           </Modal>
         );
       })()}
+
+      {/* Upgrade modal */}
+      {upgradeModal && (
+        <UpgradeModal
+          open
+          onClose={() => setUpgradeModal(null)}
+          featureName={upgradeModal.featureName}
+          requiredPlan={upgradeModal.requiredPlan}
+        />
+      )}
     </aside>
   );
 }
@@ -743,6 +835,15 @@ function InfoIcon() {
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="16" x2="12" y2="12" />
       <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
+function LockIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
 }

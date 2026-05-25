@@ -4,11 +4,31 @@ from .models import Chapter
 from .utils import extract_text_from_file
 
 
+def _check_word_limit(content: str, user) -> None:
+    """Raises ValidationError if content exceeds the user's plan word limit."""
+    if not hasattr(user, "user_plan"):
+        return
+    limit = user.user_plan.chapter_word_limit
+    if limit is None:
+        return
+    word_count = len(content.split())
+    if word_count > limit:
+        raise serializers.ValidationError(
+            f"O capítulo possui {word_count:,} palavras, mas o seu plano permite no máximo {limit:,} por capítulo."
+        )
+
+
 class ChapterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapter
         fields = ("id", "project", "number", "title", "content", "created_at", "updated_at")
         read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate_content(self, value):
+        request = self.context.get("request")
+        if request:
+            _check_word_limit(value, request.user)
+        return value
 
     def validate(self, attrs):
         project = attrs.get("project") or (self.instance.project if self.instance else None)
@@ -40,6 +60,11 @@ class ChapterImportSerializer(serializers.Serializer):
         title = self.validated_data.get("chapter_title", "")
 
         text = extract_text_from_file(uploaded_file)
+
+        request = self.context.get("request")
+        if request:
+            _check_word_limit(text, request.user)
+
         next_number = (project.chapters.order_by("-number").first().number + 1
                        if project.chapters.exists() else 1)
 
