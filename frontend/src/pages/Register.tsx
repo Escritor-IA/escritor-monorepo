@@ -1,29 +1,35 @@
-import { useState, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "@/api/auth";
+import { paymentsApi } from "@/api/payments";
+import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { AuthShell } from "./Login";
 
+type Step = 1 | 2 | 3;
+type BillingCycle = "monthly" | "annual";
 type PlanKey = "free" | "basic" | "premium";
 
 const PLANS: {
   key: PlanKey;
   name: string;
   tagline: string;
-  price: string;
-  priceNote?: string;
-  annualNote?: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  annualMonthly: string;
   credits: number;
   features: string[];
   highlight?: boolean;
+  paid?: boolean;
 }[] = [
   {
     key: "free",
     name: "Rascunho",
     tagline: "Para começar a tatear o caminho.",
-    price: "0",
-    priceNote: "/sempre",
+    monthlyPrice: "0",
+    annualPrice: "0",
+    annualMonthly: "",
     credits: 10,
     features: [
       "10 créditos iniciais",
@@ -35,16 +41,17 @@ const PLANS: {
     key: "basic",
     name: "Autor",
     tagline: "Para quem está escrevendo a obra.",
-    price: "29",
-    priceNote: "/mês",
-    annualNote: "Cobrança anual: R$ 24/mês",
+    monthlyPrice: "29",
+    annualPrice: "288",
+    annualMonthly: "R$ 24/mês",
     credits: 60,
     highlight: true,
+    paid: true,
     features: [
-      "Texto ilimitado",
-      "Anotações calibradas por gênero",
+      "60 créditos por mês",
       "3 perfis de leitor simulados",
-      "Sugestões sob demanda",
+      "Análise narrativa e total",
+      "Sugestões criativas sob demanda",
       "Histórico de versões",
     ],
   },
@@ -52,24 +59,30 @@ const PLANS: {
     key: "premium",
     name: "Obra Completa",
     tagline: "Para quem está fechando o livro.",
-    price: "59",
-    priceNote: "/mês",
-    annualNote: "Cobrança anual: R$ 49/mês",
+    monthlyPrice: "59",
+    annualPrice: "588",
+    annualMonthly: "R$ 49/mês",
     credits: 150,
+    paid: true,
     features: [
-      "Tudo do plano Autor",
-      "Leitura crítica em capítulos longos",
+      "150 créditos por mês",
       "6 perfis de leitor, incluindo nichos",
+      "Análise total do livro",
       "Diff narrativo entre versões",
       "Exportação para revisão profissional",
     ],
   },
 ];
 
+const REG_EMAIL_KEY = "reg_pending_email";
+
 export function Register() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
+  const { setUser, isAuthenticated } = useAuthStore();
 
+  const [step, setStep] = useState<Step>(1);
+
+  // Step 1 — account info
   const [form, setForm] = useState({
     username: "",
     first_name: "",
@@ -77,22 +90,67 @@ export function Register() {
     email: "",
     password: "",
     password_confirm: "",
-    plan: "basic" as PlanKey,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const step1Valid =
-    form.first_name && form.last_name && form.username && form.email && form.password.length >= 6 && form.password_confirm && agreed;
+  // Step 2 — OTP
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otpError, setOtpError] = useState("");
+  const [otpSuccess, setOtpSuccess] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendIn, setResendIn] = useState(28);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  // Step 3 — plan selection
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("basic");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  // Restore step on mount
+  useEffect(() => {
+    // Already authenticated (verified + logged in) — go straight to plan selection
+    if (isAuthenticated) {
+      setStep(3);
+      return;
+    }
+    // Registered but not yet verified — restore OTP step
+    const savedEmail = sessionStorage.getItem(REG_EMAIL_KEY);
+    if (savedEmail) {
+      setForm((f) => ({ ...f, email: savedEmail }));
+      setStep(2);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const step1Valid =
+    form.first_name &&
+    form.last_name &&
+    form.username &&
+    form.email &&
+    form.password.length >= 6 &&
+    form.password_confirm &&
+    agreed;
+
+  // ── OTP resend countdown ────────────────────────────────────────────────
+  useEffect(() => {
+    if (step !== 2 || resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((v) => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [step, resendIn]);
+
+  // ── Step 1: register ───────────────────────────────────────────────────
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setErrors({});
-    setLoading(true);
+    setRegisterLoading(true);
     try {
       await authApi.register(form);
-      navigate("/verify-email", { state: { email: form.email } });
+      sessionStorage.setItem(REG_EMAIL_KEY, form.email);
+      setStep(2);
+      setResendIn(28);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       if (data) {
@@ -101,28 +159,181 @@ export function Register() {
           flat[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
         }
         setErrors(flat);
-        setStep(1);
       }
     } finally {
-      setLoading(false);
+      setRegisterLoading(false);
     }
   };
 
-  if (step === 2) {
+  // ── Step 2: OTP handlers ───────────────────────────────────────────────
+  const handleDigit = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const next = [...otp];
+    next[index] = digit;
+    setOtp(next);
+    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = [...otp];
+    pasted.split("").forEach((d, i) => { next[i] = d; });
+    setOtp(next);
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
+
+  const handleVerify = async (e: FormEvent) => {
+    e.preventDefault();
+    const otp_code = otp.join("");
+    if (otp_code.length < 6) { setOtpError("Digite os 6 dígitos do código."); return; }
+    setOtpError("");
+    setVerifyLoading(true);
+    try {
+      await authApi.verifyEmail({ email: form.email, otp_code });
+      sessionStorage.removeItem(REG_EMAIL_KEY);
+
+      if (form.password) {
+        // Fresh registration — auto-login and go to plan selection
+        setOtpSuccess("Email verificado! Entrando na sua conta…");
+        const { data } = await authApi.login({ username: form.email, password: form.password });
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+        setUser(data.user);
+        setStep(3);
+      } else {
+        // Resumed session (password not in memory) — redirect to login
+        setOtpSuccess("Email verificado! Faça login para continuar.");
+        setTimeout(() => navigate("/login"), 2000);
+      }
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
+      if (data) {
+        const msg = Object.values(data).flat()[0];
+        setOtpError(typeof msg === "string" ? msg : "Código inválido.");
+      } else {
+        setOtpError("Erro ao verificar. Tente novamente.");
+      }
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendIn > 0) return;
+    setResendLoading(true);
+    setOtpError("");
+    try {
+      await authApi.resendOtp({ email: form.email });
+      setOtpSuccess("Novo código enviado para seu email.");
+      setResendIn(28);
+    } catch {
+      setOtpError("Não foi possível reenviar o código.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // ── Step 3: plan selection ─────────────────────────────────────────────
+  const handlePlanSelect = async () => {
+    setCheckoutError("");
+    if (selectedPlan === "free") {
+      navigate("/dashboard");
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const { data } = await paymentsApi.createCheckout({
+        plan: selectedPlan as "basic" | "premium",
+        billing_cycle: billingCycle,
+      });
+      window.location.href = data.checkout_url;
+    } catch {
+      setCheckoutError("Não foi possível iniciar o checkout. Tente novamente.");
+      setCheckoutLoading(false);
+    }
+  };
+
+  // ── Step 3 — plan selection UI ─────────────────────────────────────────
+  if (step === 3) {
+    const currentPlan = PLANS.find((p) => p.key === selectedPlan)!;
+    const isPaid = currentPlan.paid;
+
     return (
       <AuthShell
         eyebrow="ESCOLHA SEU PLANO"
         title={<>Qual é o seu<br /><em style={{ fontStyle: "italic" }}>momento de escrita?</em></>}
         sub="Você pode mudar de plano a qualquer momento."
       >
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Billing cycle toggle */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0,
+            background: "var(--paper-2)",
+            borderRadius: 999,
+            padding: 3,
+            width: "fit-content",
+            marginBottom: 4,
+          }}>
+            {(["monthly", "annual"] as BillingCycle[]).map((cycle) => (
+              <button
+                key={cycle}
+                type="button"
+                onClick={() => setBillingCycle(cycle)}
+                style={{
+                  padding: "5px 16px",
+                  borderRadius: 999,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all .15s ease",
+                  background: billingCycle === cycle ? "var(--card)" : "transparent",
+                  color: billingCycle === cycle ? "var(--ink)" : "var(--ink-3)",
+                  boxShadow: billingCycle === cycle ? "var(--sh-1)" : "none",
+                }}
+              >
+                {cycle === "monthly" ? "Mensal" : "Anual"}
+                {cycle === "annual" && (
+                  <span style={{
+                    marginLeft: 6,
+                    fontSize: 10,
+                    background: "var(--mint-wash)",
+                    color: "var(--green-deep)",
+                    padding: "1px 6px",
+                    borderRadius: 999,
+                    fontWeight: 600,
+                  }}>
+                    −17%
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Plan cards */}
           {PLANS.map((p) => {
-            const active = form.plan === p.key;
+            const active = selectedPlan === p.key;
+            const price = billingCycle === "annual" && p.paid ? p.annualPrice : p.monthlyPrice;
+            const priceNote = p.paid
+              ? (billingCycle === "annual" ? "/ano" : "/mês")
+              : "/sempre";
+            const subNote = billingCycle === "annual" && p.paid ? p.annualMonthly : undefined;
+
             return (
               <button
                 key={p.key}
                 type="button"
-                onClick={() => setForm({ ...form, plan: p.key })}
+                onClick={() => setSelectedPlan(p.key)}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -135,10 +346,8 @@ export function Register() {
                     ? "2px solid var(--green)"
                     : p.highlight
                       ? "2px solid #1a1640"
-                      : "2px solid var(--border)",
-                  background: active
-                    ? "rgba(78,232,163,0.05)"
-                    : "var(--paper)",
+                      : "2px solid var(--card-edge)",
+                  background: active ? "rgba(78,232,163,0.05)" : "var(--paper)",
                   color: "var(--ink)",
                 }}
               >
@@ -162,36 +371,26 @@ export function Register() {
                     }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                      {p.tagline}
-                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{p.tagline}</div>
                   </div>
 
                   <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                      <span style={{ fontSize: 11, color: "var(--ink-3)" }}>R$</span>
+                      {p.paid && <span style={{ fontSize: 11, color: "var(--ink-3)" }}>R$</span>}
                       <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: "var(--ink)" }}>
-                        {p.price}
+                        {price}
                       </span>
-                      <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                        {p.priceNote}
-                      </span>
+                      <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{priceNote}</span>
                     </div>
-                    {p.annualNote && (
-                      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
-                        {p.annualNote}
-                      </div>
+                    {subNote && (
+                      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>{subNote}</div>
                     )}
                   </div>
                 </div>
 
                 <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 5 }}>
                   {p.features.map((f) => (
-                    <li key={f} style={{
-                      fontSize: 13,
-                      color: "var(--ink-2)",
-                      display: "flex", gap: 8, alignItems: "flex-start",
-                    }}>
+                    <li key={f} style={{ fontSize: 13, color: "var(--ink-2)", display: "flex", gap: 8, alignItems: "flex-start" }}>
                       <span style={{ color: "var(--green)", lineHeight: 1.5, flexShrink: 0 }}>✓</span>
                       {f}
                     </li>
@@ -201,37 +400,119 @@ export function Register() {
             );
           })}
 
-          {errors.non_field_errors && (
+          {checkoutError && (
             <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
-              {errors.non_field_errors}
+              {checkoutError}
             </p>
           )}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              onClick={() => setStep(1)}
-              style={{ flex: 1 }}
-            >
-              Voltar
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={loading}
-              style={{ flex: 2 }}
-            >
-              {loading ? "Criando conta…" : "Criar minha conta"}
-            </Button>
-          </div>
-        </form>
+          <Button
+            type="button"
+            variant={isPaid ? "primary" : "secondary"}
+            size="lg"
+            loading={checkoutLoading}
+            onClick={handlePlanSelect}
+            style={{ width: "100%", marginTop: 4 }}
+          >
+            {checkoutLoading
+              ? "Abrindo checkout…"
+              : isPaid
+                ? `Assinar plano ${currentPlan.name}`
+                : "Começar grátis"}
+          </Button>
+        </div>
       </AuthShell>
     );
   }
 
+  // ── Step 2 — OTP verification ──────────────────────────────────────────
+  if (step === 2) {
+    const filled = otp.every(Boolean);
+    return (
+      <AuthShell
+        eyebrow="VERIFICAÇÃO"
+        title="Confirme seu email."
+        sub={
+          <>
+            Enviamos um código de 6 dígitos para{" "}
+            <strong style={{ color: "var(--ink)" }}>{form.email}</strong>.
+          </>
+        }
+      >
+        <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <div onPaste={handlePaste} style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10 }}>
+            {otp.map((c, i) => (
+              <input
+                key={i}
+                ref={(el) => { inputRefs.current[i] = el; }}
+                className="input"
+                style={{
+                  height: 60, textAlign: "center",
+                  fontSize: 24, fontFamily: "var(--serif)", fontWeight: 500,
+                  letterSpacing: 0,
+                }}
+                value={c}
+                onChange={(e) => handleDigit(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                inputMode="numeric"
+                maxLength={1}
+                autoFocus={i === 0}
+              />
+            ))}
+          </div>
+
+          {otpError && (
+            <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
+              {otpError}
+            </p>
+          )}
+          {otpSuccess && (
+            <p style={{ fontSize: 13, color: "var(--green)", background: "var(--mint-wash-soft)", padding: "10px 12px", borderRadius: 8 }}>
+              {otpSuccess}
+            </p>
+          )}
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            loading={verifyLoading}
+            disabled={!filled || verifyLoading}
+            style={{ width: "100%", opacity: filled ? 1 : 0.55 }}
+          >
+            {verifyLoading ? "Verificando…" : "Confirmar"}
+          </Button>
+
+          <div style={{ textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
+            {resendIn > 0 ? (
+              <>Não recebeu? Reenviar em <strong style={{ color: "var(--ink)" }}>{resendIn}s</strong></>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendLoading}
+                style={{ color: "var(--green)", cursor: "pointer", fontWeight: 500, background: "none", border: "none" }}
+              >
+                {resendLoading ? "Enviando…" : "Reenviar código"}
+              </button>
+            )}
+          </div>
+        </form>
+
+        <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            style={{ color: "var(--green)", background: "none", border: "none", cursor: "pointer" }}
+          >
+            ← Mudar email
+          </button>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  // ── Step 1 — account info ──────────────────────────────────────────────
   return (
     <AuthShell
       eyebrow="NOVO MANUSCRITO"
@@ -239,7 +520,7 @@ export function Register() {
       sub="Crie sua conta e escolha o plano ideal para o seu momento."
     >
       <form
-        onSubmit={(e) => { e.preventDefault(); setStep(2); }}
+        onSubmit={handleRegister}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
         <div style={{ display: "flex", gap: 12 }}>
@@ -313,14 +594,21 @@ export function Register() {
           </span>
         </label>
 
+        {errors.non_field_errors && (
+          <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
+            {errors.non_field_errors}
+          </p>
+        )}
+
         <Button
           type="submit"
           variant="primary"
           size="lg"
+          loading={registerLoading}
           disabled={!step1Valid}
           style={{ width: "100%", marginTop: 8, opacity: step1Valid ? 1 : 0.55 }}
         >
-          Próximo →
+          {registerLoading ? "Criando conta…" : "Próximo →"}
         </Button>
       </form>
 

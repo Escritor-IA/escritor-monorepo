@@ -9,6 +9,8 @@ import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
 import { NotFound } from "@/pages/NotFound";
+import { PaymentProcessing } from "@/pages/PaymentProcessing";
+import { PaymentSuccess } from "@/pages/PaymentSuccess";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthStore();
@@ -60,6 +62,8 @@ export default function App() {
               </RequireAuth>
             }
           />
+          <Route path="/pagamento/processando" element={<PaymentProcessing />} />
+          <Route path="/pagamento/sucesso" element={<PaymentSuccess />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

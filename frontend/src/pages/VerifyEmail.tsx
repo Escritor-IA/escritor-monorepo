@@ -58,7 +58,7 @@ export function VerifyEmail() {
     setLoading(true);
     try {
       await authApi.verifyEmail({ email, otp_code });
-      setSuccess("Email verificado! Redirecionando…");
+      setSuccess("Email verificado! Faça login para continuar.");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
