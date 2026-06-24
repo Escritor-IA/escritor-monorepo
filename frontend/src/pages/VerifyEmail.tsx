@@ -1,5 +1,6 @@
 import { useState, type FormEvent, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/UI/Button";
 import { AuthShell } from "./Login";
@@ -7,6 +8,7 @@ import { AuthShell } from "./Login";
 export function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const email = (location.state as { email?: string } | null)?.email ?? "";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -20,8 +22,8 @@ export function VerifyEmail() {
 
   useEffect(() => {
     if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((v) => v - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResendIn((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
   }, [resendIn]);
 
   const handleDigit = (index: number, value: string) => {
@@ -53,20 +55,20 @@ export function VerifyEmail() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const otp_code = otp.join("");
-    if (otp_code.length < 6) { setError("Digite os 6 dígitos do código."); return; }
+    if (otp_code.length < 6) { setError(t("auth.verify_email.invalid_digits")); return; }
     setError("");
     setLoading(true);
     try {
       await authApi.verifyEmail({ email, otp_code });
-      setSuccess("Email verificado! Redirecionando…");
+      setSuccess(t("auth.verify_email.verified"));
       setTimeout(() => navigate("/login"), 2000);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       if (data) {
         const msg = Object.values(data).flat()[0];
-        setError(typeof msg === "string" ? msg : "Código inválido.");
+        setError(typeof msg === "string" ? msg : t("auth.verify_email.invalid_code"));
       } else {
-        setError("Erro ao verificar. Tente novamente.");
+        setError(t("auth.verify_email.verify_error"));
       }
     } finally {
       setLoading(false);
@@ -79,10 +81,10 @@ export function VerifyEmail() {
     setError("");
     try {
       await authApi.resendOtp({ email });
-      setSuccess("Novo código enviado para seu email.");
+      setSuccess(t("auth.verify_email.resent"));
       setResendIn(28);
     } catch {
-      setError("Não foi possível reenviar o código.");
+      setError(t("auth.verify_email.resend_error"));
     } finally {
       setResendLoading(false);
     }
@@ -95,11 +97,11 @@ export function VerifyEmail() {
 
   return (
     <AuthShell
-      eyebrow="VERIFICAÇÃO"
-      title="Confirme seu email."
+      eyebrow={t("auth.verify_email.eyebrow")}
+      title={t("auth.verify_email.title")}
       sub={
         <>
-          Enviamos um código de 6 dígitos para{" "}
+          {t("auth.verify_email.sub")}{" "}
           <strong style={{ color: "var(--ink)" }}>{email}</strong>.
         </>
       }
@@ -145,12 +147,15 @@ export function VerifyEmail() {
           disabled={!filled || loading}
           style={{ width: "100%", opacity: filled ? 1 : 0.55 }}
         >
-          {loading ? "Verificando…" : "Confirmar"}
+          {loading ? t("auth.verify_email.verifying") : t("auth.verify_email.confirm")}
         </Button>
 
         <div style={{ textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
           {resendIn > 0 ? (
-            <>Não recebeu? Reenviar em <strong style={{ color: "var(--ink)" }}>{resendIn}s</strong></>
+            <>
+              {t("auth.verify_email.resend_wait")}{" "}
+              <strong style={{ color: "var(--ink)" }}>{resendIn}s</strong>
+            </>
           ) : (
             <button
               type="button"
@@ -158,7 +163,7 @@ export function VerifyEmail() {
               disabled={resendLoading}
               style={{ color: "var(--green)", cursor: "pointer", fontWeight: 500 }}
             >
-              {resendLoading ? "Enviando…" : "Reenviar código"}
+              {resendLoading ? t("auth.verify_email.resending") : t("auth.verify_email.resend")}
             </button>
           )}
         </div>
@@ -166,7 +171,7 @@ export function VerifyEmail() {
 
       <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
         <Link to="/register" style={{ color: "var(--green)" }}>
-          ← Mudar email
+          {t("auth.verify_email.change_email")}
         </Link>
       </div>
     </AuthShell>

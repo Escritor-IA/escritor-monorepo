@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
@@ -7,67 +8,15 @@ import { AuthShell } from "./Login";
 
 type PlanKey = "free" | "basic" | "premium";
 
-const PLANS: {
-  key: PlanKey;
-  name: string;
-  tagline: string;
-  price: string;
-  priceNote?: string;
-  annualNote?: string;
-  credits: number;
-  features: string[];
-  highlight?: boolean;
-}[] = [
-  {
-    key: "free",
-    name: "Rascunho",
-    tagline: "Para começar a tatear o caminho.",
-    price: "0",
-    priceNote: "/sempre",
-    credits: 10,
-    features: [
-      "10 créditos iniciais",
-      "1 leitor simulado",
-      "Análise local",
-    ],
-  },
-  {
-    key: "basic",
-    name: "Autor",
-    tagline: "Para quem está escrevendo a obra.",
-    price: "29",
-    priceNote: "/mês",
-    annualNote: "Cobrança anual: R$ 24/mês",
-    credits: 60,
-    highlight: true,
-    features: [
-      "Texto ilimitado",
-      "Anotações calibradas por gênero",
-      "3 perfis de leitor simulados",
-      "Sugestões sob demanda",
-      "Histórico de versões",
-    ],
-  },
-  {
-    key: "premium",
-    name: "Obra Completa",
-    tagline: "Para quem está fechando o livro.",
-    price: "59",
-    priceNote: "/mês",
-    annualNote: "Cobrança anual: R$ 49/mês",
-    credits: 150,
-    features: [
-      "Tudo do plano Autor",
-      "Leitura crítica em capítulos longos",
-      "6 perfis de leitor, incluindo nichos",
-      "Diff narrativo entre versões",
-      "Exportação para revisão profissional",
-    ],
-  },
+const PLAN_META: { key: PlanKey; price: string; credits: number; highlight?: boolean }[] = [
+  { key: "free", price: "0", credits: 10 },
+  { key: "basic", price: "29", credits: 60, highlight: true },
+  { key: "premium", price: "59", credits: 150 },
 ];
 
 export function Register() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2>(1);
 
   const [form, setForm] = useState({
@@ -84,7 +33,8 @@ export function Register() {
   const [agreed, setAgreed] = useState(false);
 
   const step1Valid =
-    form.first_name && form.last_name && form.username && form.email && form.password.length >= 6 && form.password_confirm && agreed;
+    form.first_name && form.last_name && form.username && form.email &&
+    form.password.length >= 6 && form.password_confirm && agreed;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -111,13 +61,20 @@ export function Register() {
   if (step === 2) {
     return (
       <AuthShell
-        eyebrow="ESCOLHA SEU PLANO"
-        title={<>Qual é o seu<br /><em style={{ fontStyle: "italic" }}>momento de escrita?</em></>}
-        sub="Você pode mudar de plano a qualquer momento."
+        eyebrow={t("auth.register.plan_eyebrow")}
+        title={
+          <>
+            {t("auth.register.plan_title")}
+            <br />
+            <em style={{ fontStyle: "italic" }}>{t("auth.register.plan_title_em")}</em>
+          </>
+        }
+        sub={t("auth.register.plan_sub")}
       >
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {PLANS.map((p) => {
+          {PLAN_META.map((p) => {
             const active = form.plan === p.key;
+            const features = t(`auth.register.plans.${p.key}.features`, { returnObjects: true }) as string[];
             return (
               <button
                 key={p.key}
@@ -136,9 +93,7 @@ export function Register() {
                     : p.highlight
                       ? "2px solid #1a1640"
                       : "2px solid var(--border)",
-                  background: active
-                    ? "rgba(78,232,163,0.05)"
-                    : "var(--paper)",
+                  background: active ? "rgba(78,232,163,0.05)" : "var(--paper)",
                   color: "var(--ink)",
                 }}
               >
@@ -149,7 +104,7 @@ export function Register() {
                     fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
                     padding: "3px 12px", borderRadius: 20, whiteSpace: "nowrap",
                   }}>
-                    MAIS ESCOLHIDO
+                    {t("auth.register.most_chosen")}
                   </div>
                 )}
 
@@ -160,10 +115,10 @@ export function Register() {
                       color: active || p.highlight ? "var(--green)" : "var(--ink)",
                       marginBottom: 2,
                     }}>
-                      {p.name}
+                      {t(`auth.register.plans.${p.key}.name`)}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                      {p.tagline}
+                      {t(`auth.register.plans.${p.key}.tagline`)}
                     </div>
                   </div>
 
@@ -174,19 +129,19 @@ export function Register() {
                         {p.price}
                       </span>
                       <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                        {p.priceNote}
+                        {t(`auth.register.plans.${p.key}.price_note`)}
                       </span>
                     </div>
-                    {p.annualNote && (
+                    {t(`auth.register.plans.${p.key}.annual_note`, "") && (
                       <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
-                        {p.annualNote}
+                        {t(`auth.register.plans.${p.key}.annual_note`)}
                       </div>
                     )}
                   </div>
                 </div>
 
                 <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 5 }}>
-                  {p.features.map((f) => (
+                  {Array.isArray(features) && features.map((f) => (
                     <li key={f} style={{
                       fontSize: 13,
                       color: "var(--ink-2)",
@@ -208,23 +163,11 @@ export function Register() {
           )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              onClick={() => setStep(1)}
-              style={{ flex: 1 }}
-            >
-              Voltar
+            <Button type="button" variant="secondary" size="lg" onClick={() => setStep(1)} style={{ flex: 1 }}>
+              {t("auth.register.back")}
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={loading}
-              style={{ flex: 2 }}
-            >
-              {loading ? "Criando conta…" : "Criar minha conta"}
+            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ flex: 2 }}>
+              {loading ? t("auth.register.creating") : t("auth.register.create")}
             </Button>
           </div>
         </form>
@@ -234,9 +177,15 @@ export function Register() {
 
   return (
     <AuthShell
-      eyebrow="NOVO MANUSCRITO"
-      title={<>Comece a escrever<br /><em style={{ fontStyle: "italic" }}>em três páginas.</em></>}
-      sub="Crie sua conta e escolha o plano ideal para o seu momento."
+      eyebrow={t("auth.register.eyebrow")}
+      title={
+        <>
+          {t("auth.register.title")}
+          <br />
+          <em style={{ fontStyle: "italic" }}>{t("auth.register.title_em")}</em>
+        </>
+      }
+      sub={t("auth.register.sub")}
     >
       <form
         onSubmit={(e) => { e.preventDefault(); setStep(2); }}
@@ -244,8 +193,8 @@ export function Register() {
       >
         <div style={{ display: "flex", gap: 12 }}>
           <Input
-            label="Nome"
-            placeholder="João"
+            label={t("auth.register.first_name")}
+            placeholder={t("auth.register.first_name_placeholder")}
             value={form.first_name}
             onChange={(e) => setForm({ ...form, first_name: e.target.value })}
             error={errors.first_name}
@@ -253,8 +202,8 @@ export function Register() {
             required
           />
           <Input
-            label="Sobrenome"
-            placeholder="Silva"
+            label={t("auth.register.last_name")}
+            placeholder={t("auth.register.last_name_placeholder")}
             value={form.last_name}
             onChange={(e) => setForm({ ...form, last_name: e.target.value })}
             error={errors.last_name}
@@ -262,36 +211,36 @@ export function Register() {
           />
         </div>
         <Input
-          label="Nome de usuário"
-          placeholder="Como deseja ser chamado(a)"
+          label={t("auth.register.username")}
+          placeholder={t("auth.register.username_placeholder")}
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
           error={errors.username}
           required
         />
         <Input
-          label="E-mail"
+          label={t("auth.register.email")}
           type="email"
-          placeholder="voce@exemplo.com"
+          placeholder={t("auth.register.email_placeholder")}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           error={errors.email}
           required
         />
         <Input
-          label="Senha"
+          label={t("auth.register.password")}
           type="password"
-          placeholder="••••••••"
-          hint="Mínimo 6 caracteres."
+          placeholder={t("auth.register.password_placeholder")}
+          hint={t("auth.register.password_hint")}
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           error={errors.password}
           required
         />
         <Input
-          label="Confirmar senha"
+          label={t("auth.register.password_confirm")}
           type="password"
-          placeholder="••••••••"
+          placeholder={t("auth.register.password_placeholder")}
           value={form.password_confirm}
           onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
           error={errors.password_confirm}
@@ -306,10 +255,10 @@ export function Register() {
             style={{ accentColor: "var(--ink)", marginTop: 3 }}
           />
           <span>
-            Concordo com os{" "}
-            <span style={{ color: "var(--green)" }}>Termos</span>{" "}
-            e a{" "}
-            <span style={{ color: "var(--green)" }}>Política de Privacidade</span>.
+            {t("auth.register.terms_agree")}{" "}
+            <span style={{ color: "var(--green)" }}>{t("auth.register.terms")}</span>{" "}
+            {t("auth.register.and")}{" "}
+            <span style={{ color: "var(--green)" }}>{t("auth.register.privacy")}</span>.
           </span>
         </label>
 
@@ -320,14 +269,14 @@ export function Register() {
           disabled={!step1Valid}
           style={{ width: "100%", marginTop: 8, opacity: step1Valid ? 1 : 0.55 }}
         >
-          Próximo →
+          {t("auth.register.next")}
         </Button>
       </form>
 
       <div style={{ marginTop: 22, textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
-        Já tem conta?{" "}
+        {t("auth.register.already_account")}{" "}
         <Link to="/login" style={{ color: "var(--green)", fontWeight: 500 }}>
-          Entrar
+          {t("auth.register.sign_in")}
         </Link>
       </div>
     </AuthShell>

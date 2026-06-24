@@ -13,6 +13,7 @@ export interface User {
   email: string;
   user_plan: UserPlan;
   date_joined: string;
+  preferred_language: "pt-br" | "en" | "fr" | "es";
 }
 
 export type ProjectGenre =

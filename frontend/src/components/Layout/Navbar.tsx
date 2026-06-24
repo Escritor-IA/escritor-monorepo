@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/api/auth";
 import { ProfileCard } from "./ProfileCard";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
+import { LanguageSelector } from "@/components/UI/LanguageSelector";
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -49,13 +52,14 @@ export function Navbar() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <LanguageSelector />
           {plan && (
-            <div className="credits" title="Créditos disponíveis">
+            <div className="credits" title={t("nav.credits_label")}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="9" />
               </svg>
               <span className="num">{plan.credits}</span>
-              <span>créditos</span>
+              <span>{t("nav.credits")}</span>
             </div>
           )}
 
@@ -99,9 +103,9 @@ export function Navbar() {
 
       {confirmOpen && (
         <ConfirmDialog
-          title="Excluir conta"
-          description="Tem certeza que deseja excluir sua conta? Todos os seus projetos e dados serão removidos permanentemente."
-          confirmLabel="Excluir conta"
+          title={t("confirm.delete_account_title")}
+          description={t("confirm.delete_account_description")}
+          confirmLabel={t("confirm.delete_account_confirm")}
           danger
           loading={deleting}
           onConfirm={handleDeleteAccount}

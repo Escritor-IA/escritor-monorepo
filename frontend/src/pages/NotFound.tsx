@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/UI/Button";
 import logo from "@/assets/logo.png";
 
 export function NotFound() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div style={{
@@ -38,7 +40,7 @@ export function NotFound() {
           <img src={logo} alt="Escritor.ia" style={{ width: 24, height: 24, borderRadius: 6 }} />
         </button>
         <button onClick={() => navigate(-1)} className="btn btn-ghost btn-sm" style={{ color: "var(--ink-3)" }}>
-          ← Voltar
+          {t("not_found.back_header")}
         </button>
       </header>
 
@@ -58,7 +60,7 @@ export function NotFound() {
       }}>
         {/* LEFT — copy */}
         <div>
-          <div className="eyebrow">ERRO 404 · PÁGINA NÃO ENCONTRADA</div>
+          <div className="eyebrow">{t("not_found.eyebrow")}</div>
 
           <h1 className="serif" style={{
             marginTop: 20,
@@ -69,8 +71,8 @@ export function NotFound() {
             color: "var(--ink)",
             textWrap: "balance",
           } as React.CSSProperties}>
-            Esta página<br />
-            <em style={{ color: "var(--ink-3)" }}>nunca foi escrita.</em>
+            {t("not_found.title")}<br />
+            <em style={{ color: "var(--ink-3)" }}>{t("not_found.title_em")}</em>
           </h1>
 
           <p className="serif" style={{
@@ -80,17 +82,15 @@ export function NotFound() {
             color: "var(--ink-2)",
             maxWidth: 460,
           }}>
-            Você abriu um capítulo que não existe no nosso manuscrito.
-            Talvez tenha sido um link antigo, talvez um erro de digitação —
-            ou talvez, simplesmente, ainda esteja por vir.
+            {t("not_found.description")}
           </p>
 
           <div style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 12 }}>
             <Button variant="primary" size="lg" onClick={() => navigate("/login")}>
-              Entrar na minha conta
+              {t("not_found.sign_in")}
             </Button>
             <Button variant="secondary" size="lg" onClick={() => navigate("/register")}>
-              Criar uma conta
+              {t("not_found.create_account")}
             </Button>
           </div>
 

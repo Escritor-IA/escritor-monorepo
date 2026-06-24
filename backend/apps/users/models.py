@@ -9,12 +9,20 @@ from .plans import get_plan_limits
 
 
 class User(AbstractUser):
+    LANGUAGE_CHOICES = [
+        ("pt-br", "Português (Brasil)"),
+        ("en", "English"),
+        ("fr", "Français"),
+        ("es", "Español"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     is_email_verified = models.BooleanField(default=False)
     otp_code = models.CharField(max_length=6, null=True, blank=True)
     otp_expires_at = models.DateTimeField(null=True, blank=True)
+    preferred_language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default="pt-br")
 
     class Meta:
         verbose_name = "Usuário"

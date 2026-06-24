@@ -1,0 +1,155 @@
+{
+  "nav": {
+    "editor": "O Editor",
+    "features": "Diferenciais",
+    "plans": "Planos",
+    "about": "Sobre",
+    "login": "Entrar",
+    "register": "Comece aqui"
+  },
+  "hero": {
+    "eyebrow": "Em beta",
+    "h1_before": "Um parceiro para quem ",
+    "h1_em": "escreve.",
+    "sub": "A primeira plataforma brasileira de apoio à escrita de ficção. Recebe seu texto, devolve coerência narrativa, reações de leitores simulados e sugestões — sempre sob seu pedido, sempre na sua voz. Nunca escreve por você.",
+    "cta_primary": "Comece aqui",
+    "cta_secondary": "Ver planos",
+    "note": "grátis até 5.000 palavras · sem cartão",
+    "mockup_hint": "Imagem apenas ilustrativa",
+    "scroll_cue": "continue lendo"
+  },
+  "product": {
+    "eyebrow": "— o editor, por dentro",
+    "h2_before": "Anotações na margem. ",
+    "h2_em": "Voz autoral",
+    "h2_after": " intacta.",
+    "p1": "Você sobe um capítulo ou o manuscrito inteiro. O Escritor.AI lê o texto à luz do gênero que você declara — fantasia, mistério, infantojuvenil, romance — e devolve apontamentos pontuais na margem. Coerência de personagem. Continuidade de cena. Ritmo. Voz.",
+    "p2": "Sugestões só aparecem quando você pede. A ferramenta nunca substitui um parágrafo seu; quando muito, propõe três caminhos e deixa a escolha com quem sempre teve a escolha: você."
+  },
+  "features": {
+    "eyebrow": "Diferenciais",
+    "h2_before": "Onde as outras ferramentas ",
+    "h2_em": "falham",
+    "h2_after": ", a sua começa.",
+    "lead": "Jasper, QuillBot, Clarice.ai — todas excelentes para copy de marketing. Nenhuma feita para ficção literária brasileira. O Escritor.AI é a primeira.",
+    "items": [
+      {
+        "n": "01",
+        "h_before": "Calibrado por ",
+        "h_em": "gênero",
+        "h_after": ", não por nicho de marketing.",
+        "body": "Fantasia tem regras diferentes de romance, que tem regras diferentes de infantojuvenil. O Escritor.AI muda a lente conforme o gênero declarado da sua obra — não conforme um template de SEO.",
+        "glyph": "fantasia · mistério · infantojuvenil · romance"
+      },
+      {
+        "n": "02",
+        "h_before": "Leitores ",
+        "h_em": "simulados",
+        "h_after": ". Reação antes da publicação.",
+        "body": "Escolha de 3 a 6 perfis de leitor — estreante, leitor de gênero, leitura crítica. Veja onde cada um se prende, onde se solta, e em que cena fecha o livro pela primeira vez.",
+        "glyph": "3 a 6 perfis · feedback por cena"
+      },
+      {
+        "n": "03",
+        "h_before": "Sua voz, no centro. ",
+        "h_em": "Sempre",
+        "h_after": ".",
+        "body": "Nada de gerar o próximo parágrafo por você. Nada de uniformizar seu estilo. O Escritor.AI aprende sua voz autoral pelos capítulos que você já escreveu, e usa isso como referência das próprias sugestões.",
+        "glyph": "co-autor não. parceiro sim."
+      }
+    ]
+  },
+  "plans": {
+    "eyebrow": "Planos",
+    "h2_before": "Pague ",
+    "h2_em": "menos",
+    "h2_after": " que um café por capítulo revisado.",
+    "lead": "Revisar profissionalmente um romance de 80 mil palavras custa entre R$2.400 e R$6.400. Aqui, você acompanha o processo inteiro pelo preço de uma assinatura.",
+    "most_chosen": "Mais escolhido",
+    "free": {
+      "name": "Rascunho",
+      "desc": "Para começar a tatear o caminho.",
+      "per": "/sempre",
+      "meta": "Sem cartão · sem prazo",
+      "cta": "Criar conta",
+      "feats": [
+        "Até 5.000 palavras por capítulo",
+        "10 créditos iniciais mensais",
+        "Coerência narrativa básica",
+        "1 leitor simulado por mês",
+        "Análise Total do Manuscrito",
+        "Sugestões pontuais sob demanda"
+      ]
+    },
+    "author": {
+      "name": "Autor",
+      "desc": "Para quem está escrevendo a obra.",
+      "per": "/mês",
+      "meta": "Cobrança anual: R$ 24/mês",
+      "cta": "Começar 14 dias grátis",
+      "feats": [
+        "Até 15.000 palavras por capítulo",
+        "60 créditos iniciais mensais",
+        "Anotações calibradas por gênero",
+        "3 perfis de leitor simulados",
+        "Sugestões sob demanda",
+        "Histórico de versões"
+      ]
+    },
+    "complete": {
+      "name": "Obra Completa",
+      "desc": "Para quem está fechando o livro.",
+      "per": "/mês",
+      "meta": "Cobrança anual: R$ 49/mês",
+      "cta": "Falar com a gente",
+      "feats": [
+        "Tudo do plano Autor",
+        "Texto Ilimitado por capítulo",
+        "150 créditos iniciais mensais",
+        "Leitura crítica em capítulos longos",
+        "6 perfis de leitor simulados"
+      ]
+    }
+  },
+  "final_cta": {
+    "h_before": "O próximo capítulo é seu. A ",
+    "h_em": "ferramenta",
+    "h_after": " é nossa.",
+    "sub": "Comece com o plano gratuito agora. Suba um trecho do seu livro, escolha o gênero e veja a margem se preencher de anotações em segundos.",
+    "cta_primary": "Comece aqui",
+    "cta_secondary": "Ver os planos",
+    "signoff_line1": "\"Nunca escreve por você.",
+    "signoff_line2": "Sempre a serviço de quem cria.\""
+  },
+  "footer": {
+    "tagline": "A primeira plataforma brasileira de apoio à escrita de ficção. Para escritores independentes que querem escrever com qualidade, não apenas com velocidade.",
+    "col_product": "Produto",
+    "col_company": "Empresa",
+    "col_community": "Comunidade",
+    "link_editor": "O editor",
+    "link_features": "Diferenciais",
+    "link_plans": "Planos",
+    "link_genres": "Gêneros suportados",
+    "link_about": "Sobre nós",
+    "link_manifesto": "Manifesto",
+    "link_contact": "Contato",
+    "link_careers": "Carreiras",
+    "link_blog": "Blog do escritor",
+    "link_newsletter": "Boletim mensal",
+    "link_discord": "Discord",
+    "link_terms": "Termos e privacidade",
+    "copyright": "© 2026 Escritor.AI — Souza · Grigolin · Lopes Filho · Thomazete · Carbelotti",
+    "made_in": "feito no Brasil ✦"
+  },
+  "mockup": {
+    "revision": "Revisão",
+    "rewrite": "Reescrever",
+    "readers": "Leitores",
+    "versions": "Versões",
+    "coherence": "Coerência",
+    "voice": "Voz autoral",
+    "word_count": "7.842 palavras · cap. 7 de 12",
+    "annotation_label": "Anotações · linha 7",
+    "reader_label": "Leitores simulados · cap. 7"
+  }
+}

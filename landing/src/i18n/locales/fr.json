@@ -1,0 +1,155 @@
+{
+  "nav": {
+    "editor": "L'Éditeur",
+    "features": "Fonctions",
+    "plans": "Tarifs",
+    "about": "À propos",
+    "login": "Connexion",
+    "register": "Commencer"
+  },
+  "hero": {
+    "eyebrow": "En bêta",
+    "h1_before": "Un partenaire pour ceux qui ",
+    "h1_em": "écrivent.",
+    "sub": "La première plateforme brésilienne d'aide à l'écriture de fiction. Elle lit votre texte et vous renvoie cohérence narrative, réactions de lecteurs simulés et suggestions — toujours à votre demande, toujours dans votre voix. Elle n'écrit jamais à votre place.",
+    "cta_primary": "Commencer",
+    "cta_secondary": "Voir les tarifs",
+    "note": "gratuit jusqu'à 5 000 mots · sans carte",
+    "mockup_hint": "Image illustrative uniquement",
+    "scroll_cue": "continuer à lire"
+  },
+  "product": {
+    "eyebrow": "— l'éditeur, de l'intérieur",
+    "h2_before": "Annotations en marge. ",
+    "h2_em": "Voix d'auteur",
+    "h2_after": " intacte.",
+    "p1": "Envoyez un chapitre ou le manuscrit entier. Escritor.AI lit le texte à travers le prisme du genre que vous déclarez — fantaisie, mystère, jeunesse, romance — et vous renvoie des annotations précises en marge. Cohérence des personnages. Continuité des scènes. Rythme. Voix.",
+    "p2": "Les suggestions n'apparaissent que lorsque vous les demandez. L'outil ne remplace jamais un de vos paragraphes ; tout au plus, il propose trois pistes et laisse le choix à celui qui l'a toujours eu : vous."
+  },
+  "features": {
+    "eyebrow": "Fonctions",
+    "h2_before": "Là où les autres outils ",
+    "h2_em": "échouent",
+    "h2_after": ", le vôtre commence.",
+    "lead": "Jasper, QuillBot, Clarice.ai — tous excellents pour le copywriting. Aucun conçu pour la fiction littéraire brésilienne. Escritor.AI est le premier.",
+    "items": [
+      {
+        "n": "01",
+        "h_before": "Calibré par ",
+        "h_em": "genre",
+        "h_after": ", pas par niche marketing.",
+        "body": "La fantasy a des règles différentes du roman, qui a des règles différentes de la jeunesse. Escritor.AI adapte sa perspective selon le genre déclaré de votre œuvre — pas selon un template SEO.",
+        "glyph": "fantasy · mystère · jeunesse · romance"
+      },
+      {
+        "n": "02",
+        "h_before": "Lecteurs ",
+        "h_em": "simulés",
+        "h_after": ". Réaction avant la publication.",
+        "body": "Choisissez parmi 3 à 6 profils de lecteurs — débutant, lecteur de genre, lecture critique. Voyez où chacun s'accroche, où il décroche, et à quelle scène il ferme le livre pour la première fois.",
+        "glyph": "3 à 6 profils · feedback par scène"
+      },
+      {
+        "n": "03",
+        "h_before": "Votre voix, au centre. ",
+        "h_em": "Toujours",
+        "h_after": ".",
+        "body": "Pas question de générer le prochain paragraphe à votre place. Pas question d'uniformiser votre style. Escritor.AI apprend votre voix d'auteur à partir des chapitres que vous avez déjà écrits, et l'utilise comme référence de ses propres suggestions.",
+        "glyph": "pas co-auteur. partenaire."
+      }
+    ]
+  },
+  "plans": {
+    "eyebrow": "Tarifs",
+    "h2_before": "Payez ",
+    "h2_em": "moins",
+    "h2_after": " qu'un café par chapitre révisé.",
+    "lead": "Réviser professionnellement un roman de 80 000 mots coûte entre R$2 400 et R$6 400. Ici, vous accompagnez tout le processus pour le prix d'un abonnement.",
+    "most_chosen": "Le plus choisi",
+    "free": {
+      "name": "Brouillon",
+      "desc": "Pour commencer à trouver son chemin.",
+      "per": "/toujours",
+      "meta": "Sans carte · sans délai",
+      "cta": "Créer un compte",
+      "feats": [
+        "Jusqu'à 5 000 mots par chapitre",
+        "10 crédits initiaux mensuels",
+        "Cohérence narrative de base",
+        "1 lecteur simulé par mois",
+        "Analyse totale du manuscrit",
+        "Suggestions ponctuelles à la demande"
+      ]
+    },
+    "author": {
+      "name": "Auteur",
+      "desc": "Pour ceux qui écrivent activement l'œuvre.",
+      "per": "/mois",
+      "meta": "Facturation annuelle : R$ 24/mois",
+      "cta": "Commencer 14 jours gratuits",
+      "feats": [
+        "Jusqu'à 15 000 mots par chapitre",
+        "60 crédits initiaux mensuels",
+        "Annotations calibrées par genre",
+        "3 profils de lecteurs simulés",
+        "Suggestions à la demande",
+        "Historique des versions"
+      ]
+    },
+    "complete": {
+      "name": "Œuvre Complète",
+      "desc": "Pour ceux qui finalisent le livre.",
+      "per": "/mois",
+      "meta": "Facturation annuelle : R$ 49/mois",
+      "cta": "Nous contacter",
+      "feats": [
+        "Tout du plan Auteur",
+        "Texte illimité par chapitre",
+        "150 crédits initiaux mensuels",
+        "Lecture critique pour chapitres longs",
+        "6 profils de lecteurs simulés"
+      ]
+    }
+  },
+  "final_cta": {
+    "h_before": "Le prochain chapitre est le vôtre. L'",
+    "h_em": "outil",
+    "h_after": " est le nôtre.",
+    "sub": "Commencez avec le plan gratuit maintenant. Envoyez un extrait de votre livre, choisissez le genre et regardez la marge se remplir d'annotations en quelques secondes.",
+    "cta_primary": "Commencer",
+    "cta_secondary": "Voir les tarifs",
+    "signoff_line1": "\"N'écrit jamais à votre place.",
+    "signoff_line2": "Toujours au service de ceux qui créent.\""
+  },
+  "footer": {
+    "tagline": "La première plateforme brésilienne d'aide à l'écriture de fiction. Pour les écrivains indépendants qui veulent écrire avec qualité, pas seulement avec vitesse.",
+    "col_product": "Produit",
+    "col_company": "Entreprise",
+    "col_community": "Communauté",
+    "link_editor": "L'éditeur",
+    "link_features": "Fonctions",
+    "link_plans": "Tarifs",
+    "link_genres": "Genres supportés",
+    "link_about": "À propos",
+    "link_manifesto": "Manifeste",
+    "link_contact": "Contact",
+    "link_careers": "Carrières",
+    "link_blog": "Blog de l'écrivain",
+    "link_newsletter": "Lettre mensuelle",
+    "link_discord": "Discord",
+    "link_terms": "CGU & confidentialité",
+    "copyright": "© 2026 Escritor.AI — Souza · Grigolin · Lopes Filho · Thomazete · Carbelotti",
+    "made_in": "fait au Brésil ✦"
+  },
+  "mockup": {
+    "revision": "Révision",
+    "rewrite": "Réécrire",
+    "readers": "Lecteurs",
+    "versions": "Versions",
+    "coherence": "Cohérence",
+    "voice": "Voix d'auteur",
+    "word_count": "7 842 mots · ch. 7 sur 12",
+    "annotation_label": "Annotations · ligne 7",
+    "reader_label": "Lecteurs simulés · ch. 7"
+  }
+}

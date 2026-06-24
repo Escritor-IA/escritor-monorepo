@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { LanguageSelector } from "@/components/UI/LanguageSelector";
 
 function AuthShell({
   children,
@@ -16,6 +18,8 @@ function AuthShell({
   title: React.ReactNode;
   sub?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -82,7 +86,7 @@ function AuthShell({
                 display: "inline-block",
               }}
             />
-            MANUSCRITO Nº 41 · CAPÍTULO V
+            {t("auth.manuscript_no")}
           </div>
           <h1
             className="serif"
@@ -94,8 +98,8 @@ function AuthShell({
               lineHeight: 1.06,
             }}
           >
-            A primeira frase é<br />
-            <em style={{ fontWeight: 400 }}>a parte mais difícil.</em>
+            {t("auth.hero_quote")}<br />
+            <em style={{ fontWeight: 400 }}>{t("auth.hero_quote_em")}</em>
           </h1>
           <p
             className="serif"
@@ -107,9 +111,7 @@ function AuthShell({
               maxWidth: 460,
             }}
           >
-            Depois dela, é só uma questão de continuar.
-            <br />O Escritor.AI é a leitora paciente que lê tudo que você
-            escreve, anota nas margens, e te lembra do que você já sabia.
+            {t("auth.hero_paragraph")}
           </p>
         </div>
 
@@ -125,8 +127,8 @@ function AuthShell({
             letterSpacing: "0.04em",
           }}
         >
-          <div>v 0.1.0 · MAI 2026</div>
-          <div>— ledo, sed perscriptum.</div>
+          <div>{t("auth.version")}</div>
+          <div>{t("auth.version_sub")}</div>
         </div>
       </aside>
 
@@ -141,6 +143,11 @@ function AuthShell({
           minHeight: "100vh",
         }}
       >
+        {/* Language selector top-right */}
+        <div style={{ position: "absolute", top: 24, right: 32 }}>
+          <LanguageSelector />
+        </div>
+
         <div style={{ maxWidth: 420, width: "100%", margin: "0 auto" }}>
           {eyebrow && (
             <div className="eyebrow" style={{ marginBottom: 18 }}>
@@ -173,6 +180,7 @@ function AuthShell({
 export function Login() {
   const navigate = useNavigate();
   const setUser = useAuthStore((s) => s.setUser);
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -189,7 +197,7 @@ export function Login() {
       setUser(data.user);
       navigate("/dashboard");
     } catch {
-      setError("Usuário ou senha inválidos.");
+      setError(t("auth.login.invalid_credentials"));
     } finally {
       setLoading(false);
     }
@@ -197,23 +205,23 @@ export function Login() {
 
   return (
     <AuthShell
-      eyebrow="ENTRADA"
-      title="Bem-vindo de volta."
-      sub="Continue de onde parou. Seu manuscrito te espera."
+      eyebrow={t("auth.login.eyebrow")}
+      title={t("auth.login.title")}
+      sub={t("auth.login.sub")}
     >
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
         <Input
-          label="Usuário ou e-mail"
+          label={t("auth.login.username_label")}
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
           autoFocus
           required
         />
         <Input
-          label="Senha"
+          label={t("auth.login.password_label")}
           type="password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -242,12 +250,12 @@ export function Login() {
               defaultChecked
               style={{ accentColor: "var(--ink)" }}
             />
-            Manter conectado
+            {t("auth.login.keep_connected")}
           </label>
           <span
             style={{ fontSize: 13, color: "var(--green)", cursor: "pointer" }}
           >
-            Esqueci a senha
+            {t("auth.login.forgot_password")}
           </span>
         </div>
 
@@ -273,7 +281,7 @@ export function Login() {
           className="w-full"
           style={{ marginTop: 10, width: "100%" }}
         >
-          {loading ? "Entrando…" : "Entrar"}
+          {loading ? t("auth.login.signing_in") : t("auth.login.sign_in")}
         </Button>
       </form>
 
@@ -285,9 +293,9 @@ export function Login() {
           color: "var(--ink-3)",
         }}
       >
-        Ainda não tem conta?{" "}
+        {t("auth.login.no_account")}{" "}
         <Link to="/register" style={{ color: "var(--green)", fontWeight: 500 }}>
-          Criar conta
+          {t("auth.login.create_account")}
         </Link>
       </div>
     </AuthShell>

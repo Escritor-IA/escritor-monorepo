@@ -24,4 +24,7 @@ export const authApi = {
     client.post<{ detail: string }>("/auth/resend-otp/", data),
 
   deleteAccount: () => client.delete("/auth/me/delete/"),
+
+  updateLanguage: (preferred_language: string) =>
+    client.patch<{ preferred_language: string }>("/auth/me/", { preferred_language }),
 };
