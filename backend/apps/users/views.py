@@ -59,5 +59,15 @@ class ResendOtpView(APIView):
 
 class DeleteAccountView(APIView):
     def delete(self, request):
+        try:
+            subscription_id = request.user.user_plan.stripe_subscription_id
+            if subscription_id:
+                import stripe
+                from django.conf import settings
+                stripe.api_key = settings.STRIPE_SECRET_KEY
+                stripe.Subscription.delete(subscription_id)
+        except Exception:
+            pass  # Never block account deletion because of a Stripe error
+
         request.user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
