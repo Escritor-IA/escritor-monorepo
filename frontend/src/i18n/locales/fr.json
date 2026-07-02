@@ -7,6 +7,7 @@
     "valid_until": "Valide jusqu'au",
     "monthly": "Mensuel",
     "annual": "Annuel",
+    "change_plan": "Changer d'abonnement",
     "logout": "Se déconnecter",
     "delete_account": "Supprimer le compte"
   },
@@ -63,6 +64,7 @@
       "back": "Retour",
       "creating": "Création du compte…",
       "create": "Créer mon compte",
+      "create_account_btn": "Créer mon compte et vérifier l'e-mail",
       "plans": {
         "free": {
           "name": "Brouillon",
@@ -119,6 +121,23 @@
       "verified": "E-mail vérifié ! Redirection…",
       "resent": "Nouveau code envoyé à votre e-mail."
     }
+  },
+  "select_plan": {
+    "eyebrow": "CHOISISSEZ VOTRE PLAN",
+    "title": "Quel est votre",
+    "title_em": "moment d'écriture ?",
+    "sub": "Vous pouvez changer de plan à tout moment.",
+    "canceled": "Paiement annulé. Choisissez un plan pour continuer.",
+    "checkout_error": "Erreur lors du paiement. Veuillez réessayer.",
+    "change_error": "Erreur lors du changement de plan. Réessayez.",
+    "current_plan": "VOTRE PLAN ACTUEL",
+    "continue_free": "Continuer avec le plan gratuit",
+    "continue_paid": "Procéder au paiement →",
+    "go_upgrade": "Passer à un plan supérieur →",
+    "go_downgrade": "Rétrograder",
+    "cancel_sub": "Annuler l'abonnement",
+    "changing": "Changement en cours…",
+    "redirecting": "Redirection vers le paiement…"
   },
   "dashboard": {
     "library": "BIBLIOTHÈQUE",

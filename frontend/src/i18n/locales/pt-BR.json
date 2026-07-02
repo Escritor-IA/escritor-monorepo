@@ -7,6 +7,7 @@
     "valid_until": "Válido até",
     "monthly": "Mensal",
     "annual": "Anual",
+    "change_plan": "Mudar de plano",
     "logout": "Sair da conta",
     "delete_account": "Excluir conta"
   },
@@ -63,6 +64,7 @@
       "back": "Voltar",
       "creating": "Criando conta…",
       "create": "Criar minha conta",
+      "create_account_btn": "Criar conta e verificar email",
       "plans": {
         "free": {
           "name": "Rascunho",
@@ -119,6 +121,23 @@
       "verified": "Email verificado! Redirecionando…",
       "resent": "Novo código enviado para seu email."
     }
+  },
+  "select_plan": {
+    "eyebrow": "ESCOLHA SEU PLANO",
+    "title": "Qual é o seu",
+    "title_em": "momento de escrita?",
+    "sub": "Você pode mudar de plano a qualquer momento.",
+    "canceled": "Pagamento cancelado. Escolha um plano para continuar.",
+    "checkout_error": "Erro ao iniciar o pagamento. Tente novamente.",
+    "change_error": "Erro ao alterar o plano. Tente novamente.",
+    "current_plan": "SEU PLANO ATUAL",
+    "continue_free": "Continuar com o plano gratuito",
+    "continue_paid": "Ir para o pagamento →",
+    "go_upgrade": "Fazer upgrade →",
+    "go_downgrade": "Fazer downgrade",
+    "cancel_sub": "Cancelar assinatura",
+    "changing": "Alterando plano…",
+    "redirecting": "Redirecionando para o pagamento…"
   },
   "dashboard": {
     "library": "BIBLIOTECA",

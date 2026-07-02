@@ -49,6 +49,8 @@ class UserPlan(models.Model):
     credits = models.IntegerField(default=10)
     billing_cycle = models.CharField(max_length=10, choices=BILLING_CYCLE_CHOICES, null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    stripe_subscription_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

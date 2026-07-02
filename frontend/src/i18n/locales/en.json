@@ -7,6 +7,7 @@
     "valid_until": "Valid until",
     "monthly": "Monthly",
     "annual": "Annual",
+    "change_plan": "Change plan",
     "logout": "Sign out",
     "delete_account": "Delete account"
   },
@@ -63,6 +64,7 @@
       "back": "Back",
       "creating": "Creating account…",
       "create": "Create my account",
+      "create_account_btn": "Create account & verify email",
       "plans": {
         "free": {
           "name": "Draft",
@@ -119,6 +121,23 @@
       "verified": "Email verified! Redirecting…",
       "resent": "New code sent to your email."
     }
+  },
+  "select_plan": {
+    "eyebrow": "CHOOSE YOUR PLAN",
+    "title": "What is your",
+    "title_em": "writing moment?",
+    "sub": "You can change your plan at any time.",
+    "canceled": "Payment canceled. Choose a plan to continue.",
+    "checkout_error": "Error starting payment. Please try again.",
+    "change_error": "Error changing plan. Please try again.",
+    "current_plan": "YOUR CURRENT PLAN",
+    "continue_free": "Continue with free plan",
+    "continue_paid": "Proceed to payment →",
+    "go_upgrade": "Upgrade →",
+    "go_downgrade": "Downgrade",
+    "cancel_sub": "Cancel subscription",
+    "changing": "Changing plan…",
+    "redirecting": "Redirecting to payment…"
   },
   "dashboard": {
     "library": "LIBRARY",

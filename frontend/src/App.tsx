@@ -5,6 +5,9 @@ import { authApi } from "@/api/auth";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { VerifyEmail } from "@/pages/VerifyEmail";
+import { SelectPlan } from "@/pages/SelectPlan";
+import { CheckoutProcessing } from "@/pages/CheckoutProcessing";
+import { CheckoutSuccess } from "@/pages/CheckoutSuccess";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
@@ -36,6 +39,30 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route
+            path="/select-plan"
+            element={
+              <RequireAuth>
+                <SelectPlan />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkout/processing"
+            element={
+              <RequireAuth>
+                <CheckoutProcessing />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkout/success"
+            element={
+              <RequireAuth>
+                <CheckoutSuccess />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/dashboard"
             element={

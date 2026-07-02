@@ -6,18 +6,9 @@ import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { AuthShell } from "./Login";
 
-type PlanKey = "free" | "basic" | "premium";
-
-const PLAN_META: { key: PlanKey; price: string; credits: number; highlight?: boolean }[] = [
-  { key: "free", price: "0", credits: 10 },
-  { key: "basic", price: "29", credits: 60, highlight: true },
-  { key: "premium", price: "59", credits: 150 },
-];
-
 export function Register() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [step, setStep] = useState<1 | 2>(1);
 
   const [form, setForm] = useState({
     username: "",
@@ -26,13 +17,12 @@ export function Register() {
     email: "",
     password: "",
     password_confirm: "",
-    plan: "basic" as PlanKey,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const step1Valid =
+  const isValid =
     form.first_name && form.last_name && form.username && form.email &&
     form.password.length >= 6 && form.password_confirm && agreed;
 
@@ -51,129 +41,11 @@ export function Register() {
           flat[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
         }
         setErrors(flat);
-        setStep(1);
       }
     } finally {
       setLoading(false);
     }
   };
-
-  if (step === 2) {
-    return (
-      <AuthShell
-        eyebrow={t("auth.register.plan_eyebrow")}
-        title={
-          <>
-            {t("auth.register.plan_title")}
-            <br />
-            <em style={{ fontStyle: "italic" }}>{t("auth.register.plan_title_em")}</em>
-          </>
-        }
-        sub={t("auth.register.plan_sub")}
-      >
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {PLAN_META.map((p) => {
-            const active = form.plan === p.key;
-            const features = t(`auth.register.plans.${p.key}.features`, { returnObjects: true }) as string[];
-            return (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setForm({ ...form, plan: p.key })}
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  padding: "20px 22px",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "border-color 0.15s, background 0.15s",
-                  border: active
-                    ? "2px solid var(--green)"
-                    : p.highlight
-                      ? "2px solid #1a1640"
-                      : "2px solid var(--border)",
-                  background: active ? "rgba(78,232,163,0.05)" : "var(--paper)",
-                  color: "var(--ink)",
-                }}
-              >
-                {p.highlight && (
-                  <div style={{
-                    position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)",
-                    background: "#1a1640", color: "#fff",
-                    fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
-                    padding: "3px 12px", borderRadius: 20, whiteSpace: "nowrap",
-                  }}>
-                    {t("auth.register.most_chosen")}
-                  </div>
-                )}
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{
-                      fontSize: 16, fontWeight: 600,
-                      color: active || p.highlight ? "var(--green)" : "var(--ink)",
-                      marginBottom: 2,
-                    }}>
-                      {t(`auth.register.plans.${p.key}.name`)}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                      {t(`auth.register.plans.${p.key}.tagline`)}
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                      <span style={{ fontSize: 11, color: "var(--ink-3)" }}>R$</span>
-                      <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: "var(--ink)" }}>
-                        {p.price}
-                      </span>
-                      <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                        {t(`auth.register.plans.${p.key}.price_note`)}
-                      </span>
-                    </div>
-                    {t(`auth.register.plans.${p.key}.annual_note`, "") && (
-                      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
-                        {t(`auth.register.plans.${p.key}.annual_note`)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 5 }}>
-                  {Array.isArray(features) && features.map((f) => (
-                    <li key={f} style={{
-                      fontSize: 13,
-                      color: "var(--ink-2)",
-                      display: "flex", gap: 8, alignItems: "flex-start",
-                    }}>
-                      <span style={{ color: "var(--green)", lineHeight: 1.5, flexShrink: 0 }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            );
-          })}
-
-          {errors.non_field_errors && (
-            <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
-              {errors.non_field_errors}
-            </p>
-          )}
-
-          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <Button type="button" variant="secondary" size="lg" onClick={() => setStep(1)} style={{ flex: 1 }}>
-              {t("auth.register.back")}
-            </Button>
-            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ flex: 2 }}>
-              {loading ? t("auth.register.creating") : t("auth.register.create")}
-            </Button>
-          </div>
-        </form>
-      </AuthShell>
-    );
-  }
 
   return (
     <AuthShell
@@ -187,10 +59,7 @@ export function Register() {
       }
       sub={t("auth.register.sub")}
     >
-      <form
-        onSubmit={(e) => { e.preventDefault(); setStep(2); }}
-        style={{ display: "flex", flexDirection: "column", gap: 16 }}
-      >
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", gap: 12 }}>
           <Input
             label={t("auth.register.first_name")}
@@ -262,14 +131,21 @@ export function Register() {
           </span>
         </label>
 
+        {errors.non_field_errors && (
+          <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>
+            {errors.non_field_errors}
+          </p>
+        )}
+
         <Button
           type="submit"
           variant="primary"
           size="lg"
-          disabled={!step1Valid}
-          style={{ width: "100%", marginTop: 8, opacity: step1Valid ? 1 : 0.55 }}
+          loading={loading}
+          disabled={!isValid || loading}
+          style={{ width: "100%", marginTop: 8, opacity: isValid ? 1 : 0.55 }}
         >
-          {t("auth.register.next")}
+          {loading ? t("auth.register.creating") : t("auth.register.create_account_btn")}
         </Button>
       </form>
 

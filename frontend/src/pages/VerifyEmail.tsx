@@ -2,6 +2,7 @@ import { useState, type FormEvent, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
+import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/UI/Button";
 import { AuthShell } from "./Login";
 
@@ -9,6 +10,7 @@ export function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { setUser } = useAuthStore();
   const email = (location.state as { email?: string } | null)?.email ?? "";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -59,9 +61,12 @@ export function VerifyEmail() {
     setError("");
     setLoading(true);
     try {
-      await authApi.verifyEmail({ email, otp_code });
+      const { data } = await authApi.verifyEmail({ email, otp_code });
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      setUser(data.user);
       setSuccess(t("auth.verify_email.verified"));
-      setTimeout(() => navigate("/login"), 2000);
+      setTimeout(() => navigate("/select-plan"), 1500);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       if (data) {

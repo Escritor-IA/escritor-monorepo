@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "apps.projects",
     "apps.chapters",
     "apps.analyses",
+    "apps.payments",
 ]
 
 MIDDLEWARE = [
@@ -110,6 +111,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

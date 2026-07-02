@@ -9,7 +9,6 @@ export const authApi = {
     email: string;
     password: string;
     password_confirm: string;
-    plan: "free" | "basic" | "premium";
   }) => client.post<User>("/auth/register/", data),
 
   login: (data: { username: string; password: string }) =>
@@ -18,7 +17,7 @@ export const authApi = {
   me: () => client.get<User>("/auth/me/"),
 
   verifyEmail: (data: { email: string; otp_code: string }) =>
-    client.post<{ detail: string }>("/auth/verify-email/", data),
+    client.post<{ detail: string; access: string; refresh: string; user: User }>("/auth/verify-email/", data),
 
   resendOtp: (data: { email: string }) =>
     client.post<{ detail: string }>("/auth/resend-otp/", data),

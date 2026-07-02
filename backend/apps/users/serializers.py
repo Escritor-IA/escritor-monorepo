@@ -21,11 +21,10 @@ PLAN_INITIAL_CREDITS = {
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
-    plan = serializers.ChoiceField(choices=["free", "basic", "premium"], default="free", write_only=True)
 
     class Meta:
         model = User
-        fields = ("id", "username", "first_name", "last_name", "email", "password", "password_confirm", "plan")
+        fields = ("id", "username", "first_name", "last_name", "email", "password", "password_confirm")
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("password_confirm"):
@@ -33,7 +32,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        plan = validated_data.pop("plan", "free")
         otp = generate_otp()
         user = User.objects.create_user(
             username=validated_data["username"],
@@ -45,7 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             otp_code=otp,
             otp_expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
         )
-        UserPlan.objects.create(user=user, plan=plan, credits=PLAN_INITIAL_CREDITS[plan])
+        UserPlan.objects.create(user=user, plan="free", credits=PLAN_INITIAL_CREDITS["free"])
         send_otp_email(user.username, user.email, otp)
         return user
 

@@ -106,6 +106,21 @@ export function ProfileCard({ user, plan, onDeleteRequest }: Props) {
       {/* actions */}
       <div style={{ borderTop: "1px solid var(--border)", marginTop: 10, paddingTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
         <button
+          onClick={() => navigate("/select-plan")}
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            width: "100%", fontSize: 12, color: "var(--green)",
+            background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          {t("nav.change_plan")}
+        </button>
+        <button
           onClick={handleLogout}
           style={{
             display: "flex", alignItems: "center", gap: 7,

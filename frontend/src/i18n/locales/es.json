@@ -7,6 +7,7 @@
     "valid_until": "Válido hasta",
     "monthly": "Mensual",
     "annual": "Anual",
+    "change_plan": "Cambiar plan",
     "logout": "Cerrar sesión",
     "delete_account": "Eliminar cuenta"
   },
@@ -63,6 +64,7 @@
       "back": "Atrás",
       "creating": "Creando cuenta…",
       "create": "Crear mi cuenta",
+      "create_account_btn": "Crear cuenta y verificar correo",
       "plans": {
         "free": {
           "name": "Borrador",
@@ -119,6 +121,23 @@
       "verified": "¡Correo verificado! Redirigiendo…",
       "resent": "Nuevo código enviado a tu correo."
     }
+  },
+  "select_plan": {
+    "eyebrow": "ELIGE TU PLAN",
+    "title": "¿Cuál es tu",
+    "title_em": "momento de escritura?",
+    "sub": "Puedes cambiar de plan en cualquier momento.",
+    "canceled": "Pago cancelado. Elige un plan para continuar.",
+    "checkout_error": "Error al iniciar el pago. Intenta de nuevo.",
+    "change_error": "Error al cambiar el plan. Inténtalo de nuevo.",
+    "current_plan": "TU PLAN ACTUAL",
+    "continue_free": "Continuar con el plan gratuito",
+    "continue_paid": "Ir al pago →",
+    "go_upgrade": "Hacer upgrade →",
+    "go_downgrade": "Hacer downgrade",
+    "cancel_sub": "Cancelar suscripción",
+    "changing": "Cambiando plan…",
+    "redirecting": "Redirigiendo al pago…"
   },
   "dashboard": {
     "library": "BIBLIOTECA",
