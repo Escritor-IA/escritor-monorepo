@@ -12,6 +12,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
 import { NotFound } from "@/pages/NotFound";
+import { Terms } from "@/pages/Terms";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthStore();
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/select-plan"
             element={

@@ -125,9 +125,14 @@ export function Register() {
           />
           <span>
             {t("auth.register.terms_agree")}{" "}
-            <span style={{ color: "var(--green)" }}>{t("auth.register.terms")}</span>{" "}
+            <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)" }}>
+              {t("auth.register.terms")}
+            </Link>{" "}
             {t("auth.register.and")}{" "}
-            <span style={{ color: "var(--green)" }}>{t("auth.register.privacy")}</span>.
+            <Link to="/terms#privacidade" target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)" }}>
+              {t("auth.register.privacy")}
+            </Link>
+            .
           </span>
         </label>
 

@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 
-const STEPS = [
-  { label: "Pagamento recebido", sub: "O gateway aceitou sua transação." },
-  { label: "Confirmando com o banco", sub: "Aguardando o evento de confirmação." },
-  { label: "Liberando seus créditos", sub: "Ativando o plano na sua conta." },
-];
+function useSteps() {
+  const { t } = useTranslation();
+  return [
+    { label: t("checkout_processing.step1_label"), sub: t("checkout_processing.step1_sub") },
+    { label: t("checkout_processing.step2_label"), sub: t("checkout_processing.step2_sub") },
+    { label: t("checkout_processing.step3_label"), sub: t("checkout_processing.step3_sub") },
+  ];
+}
 
 function Logo() {
   return (
@@ -17,7 +21,8 @@ function Logo() {
   );
 }
 
-function ProcessRow({ step, state, last }: { step: typeof STEPS[0]; state: "done" | "active" | "pending"; last: boolean }) {
+function ProcessRow({ step, state, last }: { step: { label: string; sub: string }; state: "done" | "active" | "pending"; last: boolean }) {
+  const { t } = useTranslation();
   return (
     <div style={{
       display: "grid", gridTemplateColumns: "32px 1fr", gap: 12,
@@ -53,7 +58,7 @@ function ProcessRow({ step, state, last }: { step: typeof STEPS[0]; state: "done
           {step.label}
         </div>
         <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
-          {state === "done" ? "Concluído" : state === "active" ? step.sub : "Aguardando…"}
+          {state === "done" ? t("checkout_processing.done") : state === "active" ? step.sub : t("checkout_processing.pending")}
         </div>
       </div>
     </div>
@@ -62,7 +67,9 @@ function ProcessRow({ step, state, last }: { step: typeof STEPS[0]; state: "done
 
 export function CheckoutProcessing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { setUser } = useAuthStore();
+  const STEPS = useSteps();
 
   const expectedPlan = sessionStorage.getItem("checkout_plan") as "basic" | "premium" | null;
 
@@ -136,7 +143,7 @@ export function CheckoutProcessing() {
       }}>
         <Logo />
         <div className="mono" style={{ fontSize: 12, color: "var(--ink-4)", letterSpacing: 0.5 }}>
-          PAGAMENTO SEGURO · SSL
+          {t("checkout_processing.secure_payment")}
         </div>
       </header>
 
@@ -177,7 +184,7 @@ export function CheckoutProcessing() {
           </div>
         </div>
 
-        <div className="eyebrow">PROCESSANDO PAGAMENTO</div>
+        <div className="eyebrow">{t("checkout_processing.eyebrow")}</div>
 
         <h1 className="serif" style={{
           marginTop: 16,
@@ -185,17 +192,15 @@ export function CheckoutProcessing() {
           letterSpacing: "-0.03em", lineHeight: 1.04,
           color: "var(--ink)", maxWidth: 720,
         }}>
-          Estamos confirmando<br />
-          <em style={{ color: "var(--ink-3)" }}>o seu pagamento.</em>
+          {t("checkout_processing.title")}<br />
+          <em style={{ color: "var(--ink-3)" }}>{t("checkout_processing.title_em")}</em>
         </h1>
 
         <p className="serif" style={{
           marginTop: 22, fontSize: 17, lineHeight: 1.55,
           color: "var(--ink-2)", maxWidth: 460,
         }}>
-          Isso costuma levar apenas alguns segundos. Não feche nem
-          atualize esta página — ela avança sozinha assim que recebermos
-          a confirmação.
+          {t("checkout_processing.sub")}
         </p>
 
         {/* Steps tracker */}
@@ -206,7 +211,7 @@ export function CheckoutProcessing() {
           {STEPS.map((s, i) => {
             const state: "done" | "active" | "pending" =
               i < step ? "done" : i === step ? "active" : "pending";
-            return <ProcessRow key={s.label} step={s} state={state} last={i === STEPS.length - 1} />;
+            return <ProcessRow key={i} step={s} state={state} last={i === STEPS.length - 1} />;
           })}
         </div>
 
@@ -220,7 +225,7 @@ export function CheckoutProcessing() {
               width: 6, height: 6, borderRadius: "50%",
               background: "var(--green)", animation: "pulseDot 1s infinite",
             }} />
-            AGUARDANDO WEBHOOK
+            {t("checkout_processing.awaiting_webhook")}
           </span>
           <span style={{ color: "var(--ink-5)" }}>·</span>
           <span>{mm}:{ss}</span>
@@ -233,13 +238,12 @@ export function CheckoutProcessing() {
             background: "var(--amber-wash)", borderRadius: 10,
             fontSize: 13, color: "var(--ink-2)", maxWidth: 440,
           }}>
-            Está demorando mais que o normal? Fique tranquilo — seu pagamento
-            está seguro. Se nada acontecer, você receberá um e-mail e pode{" "}
+            {t("checkout_processing.slow_hint")}{" "}
             <button
               onClick={() => navigate("/dashboard")}
               style={{ color: "var(--green)", fontWeight: 500, textDecoration: "underline" }}
             >
-              acessar o painel
+              {t("checkout_processing.access_dashboard")}
             </button>.
           </div>
         )}
@@ -259,7 +263,7 @@ export function CheckoutProcessing() {
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          Transação criptografada de ponta a ponta
+          {t("checkout_processing.encrypted")}
         </span>
       </footer>
     </div>

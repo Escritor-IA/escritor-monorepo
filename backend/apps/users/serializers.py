@@ -107,8 +107,8 @@ class ResendOtpSerializer(serializers.Serializer):
 class UserPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPlan
-        fields = ("plan", "credits", "billing_cycle", "expires_at")
-        read_only_fields = ("plan", "credits", "billing_cycle", "expires_at")
+        fields = ("plan", "credits", "billing_cycle", "expires_at", "currency")
+        read_only_fields = ("plan", "credits", "billing_cycle", "expires_at", "currency")
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -42,12 +42,18 @@ class UserPlan(models.Model):
         ("monthly", "Mensal"),
         ("annual", "Anual"),
     ]
+    CURRENCY_CHOICES = [
+        ("brl", "BRL"),
+        ("usd", "USD"),
+        ("eur", "EUR"),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user_plan")
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default="free")
     credits = models.IntegerField(default=10)
     billing_cycle = models.CharField(max_length=10, choices=BILLING_CYCLE_CHOICES, null=True, blank=True)
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="brl")
     expires_at = models.DateTimeField(null=True, blank=True)
     stripe_customer_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     stripe_subscription_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)

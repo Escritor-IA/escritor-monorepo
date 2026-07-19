@@ -1,24 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
-import { paymentsApi } from "@/api/payments";
+import { paymentsApi, type PlanCurrencyPrices } from "@/api/payments";
 import { Button } from "@/components/UI/Button";
 import { AuthShell } from "./Login";
+import { CURRENCY_SYMBOL, currencyForLanguage, formatPrice, type Currency } from "@/utils/currency";
 
 type PlanKey = "free" | "basic" | "premium";
 
 const PLAN_ORDER: PlanKey[] = ["free", "basic", "premium"];
 
-const PLAN_META: { key: PlanKey; price: string; highlight?: boolean }[] = [
-  { key: "free", price: "0" },
-  { key: "basic", price: "29", highlight: true },
-  { key: "premium", price: "59" },
+const PLAN_META: { key: PlanKey; highlight?: boolean }[] = [
+  { key: "free" },
+  { key: "basic", highlight: true },
+  { key: "premium" },
 ];
 
 export function SelectPlan() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [searchParams] = useSearchParams();
   const canceled = searchParams.get("canceled") === "true";
@@ -34,6 +35,25 @@ export function SelectPlan() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [prices, setPrices] = useState<Record<"basic" | "premium", PlanCurrencyPrices> | null>(null);
+  const [detectedCurrency, setDetectedCurrency] = useState<Currency | null>(null);
+
+  useEffect(() => {
+    paymentsApi.getPlanPrices()
+      .then(({ data }) => {
+        setPrices(data.prices);
+        setDetectedCurrency(data.detected_currency);
+      })
+      .catch((err) => {
+        console.error("Failed to load plan prices:", err);
+        setPrices(null);
+        setDetectedCurrency(null);
+      });
+  }, []);
+
+  // detected_currency comes from server-side IP geolocation; falls back to
+  // the user's declared language only if that lookup failed.
+  const currency = detectedCurrency ?? currencyForLanguage(user?.preferred_language ?? i18n.language);
 
   const isDowngrade =
     selected !== "free" &&
@@ -193,9 +213,9 @@ export function SelectPlan() {
 
                 <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                    <span style={{ fontSize: 11, color: "var(--ink-3)" }}>R$</span>
+                    <span style={{ fontSize: 11, color: "var(--ink-3)" }}>{CURRENCY_SYMBOL[currency]}</span>
                     <span style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: "var(--ink)" }}>
-                      {p.price}
+                      {p.key === "free" ? "0" : prices ? formatPrice(prices[p.key][currency], currency) : "–"}
                     </span>
                     <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
                       {t(`auth.register.plans.${p.key}.price_note`)}
@@ -223,6 +243,12 @@ export function SelectPlan() {
             </button>
           );
         })}
+
+        {currency !== "brl" && (
+          <p style={{ fontSize: 11, color: "var(--ink-3)" }}>
+            {t("select_plan.price_disclaimer")}
+          </p>
+        )}
 
         {error && (
           <p style={{ fontSize: 13, color: "var(--red)", background: "var(--red-wash)", padding: "10px 12px", borderRadius: 8 }}>

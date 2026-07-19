@@ -23,6 +23,7 @@ Pillow==10.4.0
 
 # Payments
 stripe==10.5.0
+requests==2.32.3
 
 # Tests
 pytest

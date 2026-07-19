@@ -57,11 +57,16 @@ services:
       dockerfile: Dockerfile
     environment:
       VITE_APP_URL: http://localhost:5173
+      # Runs in the visitor's browser (not inside the Docker network like the
+      # frontend's Vite proxy does), so it must be a host-resolvable URL.
+      VITE_API_URL: http://localhost:8000
     ports:
       - "5174:5174"
     volumes:
       - ./landing:/app
       - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   pgdata:

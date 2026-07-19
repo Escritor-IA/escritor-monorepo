@@ -1,10 +1,9 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
-
-const PLAN_DISPLAY: Record<string, { name: string; price: string; credits: number }> = {
-  basic: { name: "Autor", price: "R$ 29,00", credits: 60 },
-  premium: { name: "Obra Completa", price: "R$ 59,00", credits: 150 },
-};
+import { paymentsApi, type PlanCurrencyPrices } from "@/api/payments";
+import { CURRENCY_SYMBOL, formatPrice } from "@/utils/currency";
 
 function Logo() {
   return (
@@ -29,15 +28,28 @@ function ReceiptRow({ label, value, mono }: { label: string; value: string; mono
 
 export function CheckoutSuccess() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
+  const [prices, setPrices] = useState<Record<"basic" | "premium", PlanCurrencyPrices> | null>(null);
 
-  const plan = user?.user_plan?.plan ?? "basic";
-  const planInfo = PLAN_DISPLAY[plan] ?? PLAN_DISPLAY.basic;
-  const credits = user?.user_plan?.credits ?? planInfo.credits;
+  useEffect(() => {
+    paymentsApi.getPlanPrices()
+      .then(({ data }) => setPrices(data.prices))
+      .catch((err) => {
+        console.error("Failed to load plan prices:", err);
+        setPrices(null);
+      });
+  }, []);
+
+  const plan = (user?.user_plan?.plan === "premium" ? "premium" : "basic") as "basic" | "premium";
+  const currency = user?.user_plan?.currency ?? "brl";
+  const planName = t(`auth.register.plans.${plan}.name`);
+  const totalPaid = prices ? `${CURRENCY_SYMBOL[currency]} ${formatPrice(prices[plan][currency], currency)}` : "—";
+  const credits = user?.user_plan?.credits ?? 0;
   const expiresAt = user?.user_plan?.expires_at
-    ? new Date(user.user_plan.expires_at).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(user.user_plan.expires_at).toLocaleDateString(i18n.language, { day: "numeric", month: "long", year: "numeric" })
     : "—";
-  const userName = user?.first_name || user?.username || "escritor";
+  const userName = user?.first_name || user?.username || t("checkout_success.default_name");
 
   return (
     <div style={{
@@ -63,7 +75,7 @@ export function CheckoutSuccess() {
       }}>
         <Logo />
         <div className="mono" style={{ fontSize: 12, color: "var(--ink-4)", letterSpacing: 0.5 }}>
-          PAGAMENTO SEGURO · SSL
+          {t("checkout_success.secure_payment")}
         </div>
       </header>
 
@@ -99,7 +111,7 @@ export function CheckoutSuccess() {
             }} />
           </div>
 
-          <div className="eyebrow">PAGAMENTO CONFIRMADO</div>
+          <div className="eyebrow">{t("checkout_success.eyebrow")}</div>
 
           <h1 className="serif" style={{
             marginTop: 18,
@@ -107,25 +119,27 @@ export function CheckoutSuccess() {
             letterSpacing: "-0.03em", lineHeight: 1.0,
             color: "var(--ink)", textWrap: "balance" as React.CSSProperties["textWrap"],
           }}>
-            Obrigado, {userName}.<br />
-            <em style={{ color: "var(--ink-3)" }}>Sua história continua.</em>
+            {t("checkout_success.title", { name: userName })}<br />
+            <em style={{ color: "var(--ink-3)" }}>{t("checkout_success.title_em")}</em>
           </h1>
 
           <p className="serif" style={{
             marginTop: 20, fontSize: 18, lineHeight: 1.55,
             color: "var(--ink-2)", maxWidth: 480,
           }}>
-            Seu plano <strong style={{ color: "var(--ink)" }}>{planInfo.name}</strong> está ativo e{" "}
-            <strong style={{ color: "var(--green)" }}>{credits} créditos</strong> já foram
-            adicionados à sua conta. Pode voltar a escrever — a leitora paciente está pronta.
+            {t("checkout_success.sub_before")}{" "}
+            <strong style={{ color: "var(--ink)" }}>{planName}</strong>{" "}
+            {t("checkout_success.sub_middle")}{" "}
+            <strong style={{ color: "var(--green)" }}>{t("checkout_success.sub_credits", { count: credits })}</strong>{" "}
+            {t("checkout_success.sub_after")}
           </p>
 
           <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 12 }}>
             <button className="btn btn-primary btn-lg" onClick={() => navigate("/dashboard")}>
-              Voltar a escrever
+              {t("checkout_success.back_to_writing")}
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => navigate("/dashboard")}>
-              Ver meus projetos
+              {t("checkout_success.view_projects")}
             </button>
           </div>
 
@@ -137,7 +151,7 @@ export function CheckoutSuccess() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
-            Enviamos o recibo para o seu e-mail.
+            {t("checkout_success.receipt_sent")}
           </div>
         </div>
 
@@ -158,9 +172,9 @@ export function CheckoutSuccess() {
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
               <div>
-                <div className="eyebrow" style={{ fontSize: 10 }}>RECIBO</div>
+                <div className="eyebrow" style={{ fontSize: 10 }}>{t("checkout_success.receipt")}</div>
                 <div className="serif" style={{ fontSize: 22, fontWeight: 500, marginTop: 6, color: "var(--ink)" }}>
-                  Plano {planInfo.name}
+                  {t("checkout_success.plan_label", { name: planName })}
                 </div>
               </div>
               <span style={{
@@ -172,7 +186,7 @@ export function CheckoutSuccess() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
-                Pago
+                {t("checkout_success.paid")}
               </span>
             </div>
 
@@ -183,7 +197,7 @@ export function CheckoutSuccess() {
               borderBottom: "1px dashed var(--card-edge)",
             }}>
               <div>
-                <div style={{ fontSize: 13, color: "var(--ink-3)" }}>Créditos adicionados</div>
+                <div style={{ fontSize: 13, color: "var(--ink-3)" }}>{t("checkout_success.credits_added")}</div>
                 <div className="serif" style={{
                   fontSize: 36, fontWeight: 500,
                   color: "var(--green)", letterSpacing: "-0.02em", lineHeight: 1.1,
@@ -206,13 +220,13 @@ export function CheckoutSuccess() {
 
             {/* Line items */}
             <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 11 }}>
-              <ReceiptRow label="Ciclo" value="Mensal" />
-              <ReceiptRow label="Renova em" value={expiresAt} />
+              <ReceiptRow label={t("checkout_success.cycle")} value={t("checkout_success.monthly")} />
+              <ReceiptRow label={t("checkout_success.renews_on")} value={expiresAt} />
               <div style={{ height: 1, background: "var(--card-edge)", margin: "4px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>Total pago</span>
+                <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{t("checkout_success.total_paid")}</span>
                 <span className="serif" style={{ fontSize: 24, fontWeight: 500, color: "var(--ink)" }}>
-                  {planInfo.price}
+                  {totalPaid}
                 </span>
               </div>
             </div>
@@ -226,7 +240,7 @@ export function CheckoutSuccess() {
               fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: 0.5,
             }}>
               <span>ESCRITOR.AI</span>
-              <span>OBRIGADO PELA CONFIANÇA ♥</span>
+              <span>{t("checkout_success.thank_you")}</span>
             </div>
           </div>
         </div>
@@ -246,10 +260,10 @@ export function CheckoutSuccess() {
             onClick={() => navigate("/select-plan")}
             style={{ color: "var(--ink-3)", cursor: "pointer" }}
           >
-            Gerenciar assinatura
+            {t("checkout_success.manage_subscription")}
           </button>
           <button style={{ color: "var(--green)", cursor: "pointer" }}>
-            Precisa de ajuda?
+            {t("checkout_success.need_help")}
           </button>
         </span>
       </footer>

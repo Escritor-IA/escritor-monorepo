@@ -3,6 +3,7 @@ export interface UserPlan {
   credits: number;
   billing_cycle: "monthly" | "annual" | null;
   expires_at: string | null;
+  currency: "brl" | "usd" | "eur";
 }
 
 export interface User {

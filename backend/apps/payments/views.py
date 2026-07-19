@@ -8,14 +8,42 @@ from rest_framework.parsers import BaseParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .geo import detect_currency, get_client_ip
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 PLAN_CONFIG = {
-    "basic": {"name": "Escritor \xe2\x80\x94 Plano Autor", "amount": 2900, "credits": 60},
-    "premium": {"name": "Escritor \xe2\x80\x94 Plano Obra Completa", "amount": 5900, "credits": 150},
+    "basic": {
+        "name": "Escritor \xe2\x80\x94 Plano Autor",
+        "price_id": settings.STRIPE_PRICE_BASIC,
+        "credits": 60,
+        "prices": {"brl": 2900, "usd": 999, "eur": 949},
+    },
+    "premium": {
+        "name": "Escritor \xe2\x80\x94 Plano Obra Completa",
+        "price_id": settings.STRIPE_PRICE_PREMIUM,
+        "credits": 150,
+        "prices": {"brl": 5900, "usd": 1999, "eur": 1899},
+    },
 }
 
-AMOUNT_TO_PLAN = {v["amount"]: k for k, v in PLAN_CONFIG.items()}
+PRICE_ID_TO_PLAN = {v["price_id"]: k for k, v in PLAN_CONFIG.items() if v["price_id"]}
+
+
+class PlanPricesView(APIView):
+    """Public endpoint used to preview per-currency prices before checkout.
+    The currency actually charged is resolved by Stripe from the visitor's IP
+    inside the hosted Checkout page — this is only for the pre-checkout UI."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        ip = get_client_ip(request)
+        detected_currency = detect_currency(ip) or "brl"
+        return Response({
+            "prices": {plan: config["prices"] for plan, config in PLAN_CONFIG.items()},
+            "detected_currency": detected_currency,
+        })
 
 
 class CreateCheckoutSessionView(APIView):
@@ -27,15 +55,7 @@ class CreateCheckoutSessionView(APIView):
         config = PLAN_CONFIG[plan]
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
-            line_items=[{
-                "price_data": {
-                    "currency": "brl",
-                    "unit_amount": config["amount"],
-                    "recurring": {"interval": "month"},
-                    "product_data": {"name": config["name"]},
-                },
-                "quantity": 1,
-            }],
+            line_items=[{"price": config["price_id"], "quantity": 1}],
             mode="subscription",
             client_reference_id=str(request.user.id),
             customer_email=request.user.email,
@@ -105,6 +125,7 @@ class WebhookView(APIView):
             expires_at=timezone.now() + timedelta(days=30),
             stripe_customer_id=session.get("customer"),
             stripe_subscription_id=session.get("subscription"),
+            currency=session.get("currency") or "brl",
         )
 
     def _on_invoice_paid(self, invoice):
@@ -117,14 +138,13 @@ class WebhookView(APIView):
         customer_email = invoice.get("customer_email")
 
         lines = (invoice.get("lines") or {}).get("data", [])
-        amount = None
+        price_id = None
         for line in lines:
-            unit_amount = (line.get("price") or {}).get("unit_amount")
-            if unit_amount:
-                amount = unit_amount
+            price_id = (line.get("price") or {}).get("id")
+            if price_id:
                 break
 
-        new_plan = AMOUNT_TO_PLAN.get(amount) if amount else None
+        new_plan = PRICE_ID_TO_PLAN.get(price_id) if price_id else None
         if not new_plan:
             return
 
@@ -148,13 +168,14 @@ class WebhookView(APIView):
         user_plan.credits = PLAN_CONFIG[new_plan]["credits"]
         user_plan.billing_cycle = "monthly"
         user_plan.expires_at = timezone.now() + timedelta(days=30)
+        user_plan.currency = invoice.get("currency") or "brl"
         if customer_id:
             user_plan.stripe_customer_id = customer_id
         subscription_id = invoice.get("subscription")
         if subscription_id:
             user_plan.stripe_subscription_id = subscription_id
         user_plan.save(update_fields=[
-            "plan", "credits", "billing_cycle", "expires_at",
+            "plan", "credits", "billing_cycle", "expires_at", "currency",
             "stripe_customer_id", "stripe_subscription_id", "updated_at",
         ])
 
@@ -179,8 +200,8 @@ class WebhookView(APIView):
 
         items = (subscription.get("items") or {}).get("data", [])
         if items:
-            amount = (items[0].get("price") or {}).get("unit_amount")
-            new_plan = AMOUNT_TO_PLAN.get(amount)
+            price_id = (items[0].get("price") or {}).get("id")
+            new_plan = PRICE_ID_TO_PLAN.get(price_id)
             if new_plan and new_plan != user_plan.plan:
                 user_plan.plan = new_plan
                 user_plan.credits = PLAN_CONFIG[new_plan]["credits"]
@@ -234,15 +255,7 @@ class ChangePlanView(APIView):
         new_config = PLAN_CONFIG[new_plan]
         stripe.Subscription.modify(
             subscription_id,
-            items=[{
-                "id": item_id,
-                "price_data": {
-                    "currency": "brl",
-                    "unit_amount": new_config["amount"],
-                    "recurring": {"interval": "month"},
-                    "product_data": {"name": new_config["name"]},
-                },
-            }],
+            items=[{"id": item_id, "price": new_config["price_id"]}],
             proration_behavior="create_prorations",
         )
 

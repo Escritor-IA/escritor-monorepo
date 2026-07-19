@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
 import logo from "./assets/logo.png";
+import { getPlanPrices, type PlanCurrencyPrices } from "./api";
+import { CURRENCY_SYMBOL, formatPrice, type Currency } from "./utils/currency";
 
 const APP_URL = import.meta.env.VITE_APP_URL ?? "http://localhost:5173";
 
@@ -503,7 +506,12 @@ interface PlanTranslation {
 }
 
 const PLAN_KEYS = ["free", "author", "complete"] as const;
-const PLAN_PRICES = { free: "0", author: "29", complete: "59" };
+// Maps the landing's plan keys to the backend's plan keys used by /payments/plan-prices/.
+const PLAN_API_KEY: Record<string, "basic" | "premium" | null> = {
+  free: null,
+  author: "basic",
+  complete: "premium",
+};
 const PLAN_FEATURED = { free: false, author: true, complete: false };
 const PLAN_FEAT_OK: Record<string, boolean[]> = {
   free:     [true, true, true, true, false, false],
@@ -513,6 +521,17 @@ const PLAN_FEAT_OK: Record<string, boolean[]> = {
 
 function Plans() {
   const { t } = useTranslation();
+  const [prices, setPrices] = useState<Record<"basic" | "premium", PlanCurrencyPrices> | null>(null);
+  const [currency, setCurrency] = useState<Currency>("brl");
+
+  useEffect(() => {
+    getPlanPrices()
+      .then((data) => {
+        setPrices(data.prices);
+        setCurrency(data.detected_currency);
+      })
+      .catch((err) => console.error("Failed to load plan prices:", err));
+  }, []);
 
   return (
     <section id="planos" className="wrap section">
@@ -526,14 +545,16 @@ function Plans() {
           const p = t(`plans.${key}`, { returnObjects: true }) as PlanTranslation;
           const featured = PLAN_FEATURED[key];
           const okFlags = PLAN_FEAT_OK[key];
+          const apiKey = PLAN_API_KEY[key];
+          const amount = apiKey && prices ? formatPrice(prices[apiKey][currency], currency) : "0";
           return (
             <div key={key} className={`plan${featured ? " featured" : ""}`}>
               {featured && <span className="featured-tag">{t("plans.most_chosen")}</span>}
               <div className="plan-name">{p.name}</div>
               <div className="plan-desc">{p.desc}</div>
               <div className="price">
-                <span className="currency">R$</span>
-                <span className="amount">{PLAN_PRICES[key]}</span>
+                <span className="currency">{CURRENCY_SYMBOL[currency]}</span>
+                <span className="amount">{amount}</span>
                 <span className="per">{p.per}</span>
               </div>
               <div className="plan-meta">{p.meta}</div>
@@ -634,7 +655,7 @@ function Footer() {
               <li><a href="#">{t("footer.link_blog")}</a></li>
               <li><a href="#">{t("footer.link_newsletter")}</a></li>
               <li><a href="#">{t("footer.link_discord")}</a></li>
-              <li><a href="#">{t("footer.link_terms")}</a></li>
+              <li><Link to="/termos">{t("footer.link_terms")}</Link></li>
             </ul>
           </div>
         </div>
@@ -667,6 +688,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/termos" element={<Terms />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
