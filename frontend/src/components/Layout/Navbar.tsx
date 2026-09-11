@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/api/auth";
 import { ProfileCard } from "./ProfileCard";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
+import { LanguageSelector } from "@/components/UI/LanguageSelector";
+import { Avatar } from "@/components/UI/Avatar";
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -49,13 +53,14 @@ export function Navbar() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <LanguageSelector />
           {plan && (
-            <div className="credits" title="Créditos disponíveis">
+            <div className="credits" title={t("nav.credits_label")}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="9" />
               </svg>
               <span className="num">{plan.credits}</span>
-              <span>créditos</span>
+              <span>{t("nav.credits")}</span>
             </div>
           )}
 
@@ -69,16 +74,7 @@ export function Navbar() {
                   background: "none", border: "none", cursor: "pointer", padding: 0,
                 }}
               >
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: "var(--ink)", color: "var(--paper)",
-                  display: "grid", placeItems: "center",
-                  fontSize: 11, fontWeight: 600, letterSpacing: 0.5,
-                }}>
-                  {user.first_name && user.last_name
-                    ? (user.first_name[0] + user.last_name[0]).toUpperCase()
-                    : user.username.slice(0, 2).toUpperCase()}
-                </div>
+                <Avatar user={user} size={28} />
                 <span>{user.username}</span>
               </button>
 
@@ -99,9 +95,9 @@ export function Navbar() {
 
       {confirmOpen && (
         <ConfirmDialog
-          title="Excluir conta"
-          description="Tem certeza que deseja excluir sua conta? Todos os seus projetos e dados serão removidos permanentemente."
-          confirmLabel="Excluir conta"
+          title={t("confirm.delete_account_title")}
+          description={t("confirm.delete_account_description")}
+          confirmLabel={t("confirm.delete_account_confirm")}
           danger
           loading={deleting}
           onConfirm={handleDeleteAccount}

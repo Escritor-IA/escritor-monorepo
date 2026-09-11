@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "apps.projects",
     "apps.chapters",
     "apps.analyses",
+    "apps.payments",
 ]
 
 MIDDLEWARE = [
@@ -108,8 +109,18 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
+
+STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
+STRIPE_PRICE_BASIC = config("STRIPE_PRICE_BASIC", default="")
+STRIPE_PRICE_PREMIUM = config("STRIPE_PRICE_PREMIUM", default="")
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

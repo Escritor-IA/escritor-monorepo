@@ -41,6 +41,44 @@ class RequestAnalysisSerializer(serializers.Serializer):
     selected_text = serializers.CharField(required=False, allow_blank=True, default="")
 
     def validate(self, data):
-        if data["analysis_type"] in ("reader_simulation", "book_reader_simulation") and not data.get("reader_profiles"):
+        analysis_type = data["analysis_type"]
+        profiles = data.get("reader_profiles", [])
+
+        if analysis_type in ("reader_simulation", "book_reader_simulation") and not profiles:
             raise serializers.ValidationError({"reader_profiles": "Selecione ao menos um perfil de leitor."})
+
+        request = self.context.get("request")
+        if request and hasattr(request.user, "user_plan"):
+            self._validate_plan_restrictions(data, request.user.user_plan)
+
         return data
+
+    def _validate_plan_restrictions(self, data, plan):
+        analysis_type = data["analysis_type"]
+        profiles = data.get("reader_profiles", [])
+
+        if not plan.is_analysis_type_allowed(analysis_type):
+            raise serializers.ValidationError({
+                "analysis_type": "Este tipo de análise não está disponível no seu plano."
+            })
+
+        if analysis_type in ("reader_simulation", "book_reader_simulation"):
+            allowed = plan.allowed_reader_profiles
+            if allowed is not None:
+                forbidden = [p for p in profiles if p not in allowed]
+                if forbidden:
+                    raise serializers.ValidationError({
+                        "reader_profiles": (
+                            f"Perfis não disponíveis no seu plano: {', '.join(forbidden)}."
+                        )
+                    })
+
+            weekly_limit = plan.reader_simulation_weekly_limit
+            if weekly_limit is not None:
+                used = plan.count_reader_simulations_this_week()
+                if used >= weekly_limit:
+                    raise serializers.ValidationError({
+                        "reader_profiles": (
+                            f"Você atingiu o limite de {weekly_limit} simulações de leitores por semana."
+                        )
+                    })

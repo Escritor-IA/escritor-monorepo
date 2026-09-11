@@ -1,0 +1,568 @@
+{
+  "errors": {
+    "generic": "Algo deu errado. Tente novamente mais tarde."
+  },
+  "nav": {
+    "credits": "créditos",
+    "plan": "Plano",
+    "credits_label": "Créditos",
+    "billing_cycle": "Ciclo",
+    "valid_until": "Válido até",
+    "monthly": "Mensal",
+    "annual": "Anual",
+    "change_plan": "Mudar de plano",
+    "logout": "Sair da conta",
+    "delete_account": "Excluir conta"
+  },
+  "auth": {
+    "manuscript_no": "MANUSCRITO Nº 41 · CAPÍTULO V",
+    "hero_quote": "A primeira frase é",
+    "hero_quote_em": "a parte mais difícil.",
+    "hero_paragraph": "Depois dela, é só uma questão de continuar. O Escritor.AI é a leitora paciente que lê tudo que você escreve, anota nas margens, e te lembra do que você já sabia.",
+    "version": "v 0.1.0 · MAI 2026",
+    "version_sub": "— ledo, sed perscriptum.",
+    "login": {
+      "eyebrow": "ENTRADA",
+      "title": "Bem-vindo de volta.",
+      "sub": "Continue de onde parou. Seu manuscrito te espera.",
+      "username_label": "Usuário ou e-mail",
+      "password_label": "Senha",
+      "keep_connected": "Manter conectado",
+      "forgot_password": "Esqueci a senha",
+      "signing_in": "Entrando…",
+      "sign_in": "Entrar",
+      "no_account": "Ainda não tem conta?",
+      "create_account": "Criar conta",
+      "invalid_credentials": "Usuário ou senha inválidos.",
+      "google_account_error": "Esta conta foi criada com login do Google. Use o botão \"Continuar com Google\" abaixo."
+    },
+    "google": {
+      "or_divider": "ou",
+      "continue_with_google": "Continuar com Google",
+      "error": "Não foi possível continuar com o Google. Tente novamente."
+    },
+    "register": {
+      "eyebrow": "NOVO MANUSCRITO",
+      "title": "Comece a escrever",
+      "title_em": "em três páginas.",
+      "sub": "Crie sua conta e escolha o plano ideal para o seu momento.",
+      "first_name": "Nome",
+      "first_name_placeholder": "João",
+      "last_name": "Sobrenome",
+      "last_name_placeholder": "Silva",
+      "username": "Nome de usuário",
+      "username_placeholder": "Como deseja ser chamado(a)",
+      "email": "E-mail",
+      "email_placeholder": "voce@exemplo.com",
+      "password": "Senha",
+      "password_placeholder": "••••••••",
+      "password_hint": "Mínimo 6 caracteres.",
+      "password_confirm": "Confirmar senha",
+      "terms_agree": "Concordo com os",
+      "terms": "Termos",
+      "and": "e a",
+      "privacy": "Política de Privacidade",
+      "next": "Próximo →",
+      "already_account": "Já tem conta?",
+      "sign_in": "Entrar",
+      "plan_eyebrow": "ESCOLHA SEU PLANO",
+      "plan_title": "Qual é o seu",
+      "plan_title_em": "momento de escrita?",
+      "plan_sub": "Você pode mudar de plano a qualquer momento.",
+      "most_chosen": "MAIS ESCOLHIDO",
+      "back": "Voltar",
+      "creating": "Criando conta…",
+      "create": "Criar minha conta",
+      "create_account_btn": "Criar Conta",
+      "plans": {
+        "free": {
+          "name": "Rascunho",
+          "tagline": "Para começar a tatear o caminho.",
+          "price_note": "/sempre",
+          "features": [
+            "10 créditos iniciais",
+            "1 leitor simulado",
+            "Análise local"
+          ]
+        },
+        "basic": {
+          "name": "Autor",
+          "tagline": "Para quem está escrevendo a obra.",
+          "price_note": "/mês",
+          "annual_note": "Cobrança anual: R$ 24/mês",
+          "features": [
+            "Texto ilimitado",
+            "Anotações calibradas por gênero",
+            "3 perfis de leitor simulados",
+            "Sugestões sob demanda",
+            "Histórico de versões"
+          ]
+        },
+        "premium": {
+          "name": "Obra Completa",
+          "tagline": "Para quem está fechando o livro.",
+          "price_note": "/mês",
+          "annual_note": "Cobrança anual: R$ 49/mês",
+          "features": [
+            "Tudo do plano Autor",
+            "Leitura crítica em capítulos longos",
+            "6 perfis de leitor, incluindo nichos",
+            "Diff narrativo entre versões",
+            "Exportação para revisão profissional"
+          ]
+        }
+      }
+    },
+    "verify_email": {
+      "eyebrow": "VERIFICAÇÃO",
+      "title": "Confirme seu email.",
+      "sub": "Enviamos um código de 6 dígitos para",
+      "verifying": "Verificando…",
+      "confirm": "Confirmar",
+      "resend_wait": "Não recebeu? Reenviar em",
+      "resend": "Reenviar código",
+      "resending": "Enviando…",
+      "change_email": "← Mudar email",
+      "invalid_digits": "Digite os 6 dígitos do código.",
+      "invalid_code": "Código inválido.",
+      "verify_error": "Erro ao verificar. Tente novamente.",
+      "resend_error": "Não foi possível reenviar o código.",
+      "verified": "Email verificado! Redirecionando…",
+      "resent": "Novo código enviado para seu email."
+    }
+  },
+  "select_plan": {
+    "eyebrow": "ESCOLHA SEU PLANO",
+    "title": "Qual é o seu",
+    "title_em": "momento de escrita?",
+    "sub": "Você pode mudar de plano a qualquer momento.",
+    "canceled": "Pagamento cancelado. Escolha um plano para continuar.",
+    "checkout_error": "Erro ao iniciar o pagamento. Tente novamente.",
+    "change_error": "Erro ao alterar o plano. Tente novamente.",
+    "current_plan": "SEU PLANO ATUAL",
+    "continue_free": "Continuar com o plano gratuito",
+    "continue_paid": "Ir para o pagamento →",
+    "go_upgrade": "Fazer upgrade →",
+    "go_downgrade": "Fazer downgrade",
+    "cancel_sub": "Cancelar assinatura",
+    "changing": "Alterando plano…",
+    "redirecting": "Redirecionando para o pagamento…",
+    "price_disclaimer": "Valor estimado. A moeda final é confirmada no pagamento, com base na sua localização."
+  },
+  "checkout_processing": {
+    "step1_label": "Pagamento recebido",
+    "step1_sub": "O gateway aceitou sua transação.",
+    "step2_label": "Confirmando com o banco",
+    "step2_sub": "Aguardando o evento de confirmação.",
+    "step3_label": "Liberando seus créditos",
+    "step3_sub": "Ativando o plano na sua conta.",
+    "done": "Concluído",
+    "pending": "Aguardando…",
+    "secure_payment": "PAGAMENTO SEGURO · SSL",
+    "eyebrow": "PROCESSANDO PAGAMENTO",
+    "title": "Estamos confirmando",
+    "title_em": "o seu pagamento.",
+    "sub": "Isso costuma levar apenas alguns segundos. Não feche nem atualize esta página — ela avança sozinha assim que recebermos a confirmação.",
+    "awaiting_webhook": "AGUARDANDO WEBHOOK",
+    "slow_hint": "Está demorando mais que o normal? Fique tranquilo — seu pagamento está seguro. Se nada acontecer, você receberá um e-mail e pode",
+    "access_dashboard": "acessar o painel",
+    "encrypted": "Transação criptografada de ponta a ponta"
+  },
+  "checkout_success": {
+    "secure_payment": "PAGAMENTO SEGURO · SSL",
+    "eyebrow": "PAGAMENTO CONFIRMADO",
+    "title": "Obrigado, {{name}}.",
+    "title_em": "Sua história continua.",
+    "sub_before": "Seu plano",
+    "sub_middle": "está ativo e",
+    "sub_credits": "{{count}} créditos",
+    "sub_after": "já foram adicionados à sua conta. Pode voltar a escrever — a leitora paciente está pronta.",
+    "back_to_writing": "Voltar a escrever",
+    "view_projects": "Ver meus projetos",
+    "receipt_sent": "Enviamos o recibo para o seu e-mail.",
+    "receipt": "RECIBO",
+    "plan_label": "Plano {{name}}",
+    "paid": "Pago",
+    "credits_added": "Créditos adicionados",
+    "cycle": "Ciclo",
+    "monthly": "Mensal",
+    "renews_on": "Renova em",
+    "total_paid": "Total pago",
+    "thank_you": "OBRIGADO PELA CONFIANÇA ♥",
+    "manage_subscription": "Gerenciar assinatura",
+    "need_help": "Precisa de ajuda?",
+    "default_name": "escritor"
+  },
+  "dashboard": {
+    "library": "BIBLIOTECA",
+    "title_count_one": "TÍTULO",
+    "title_count_other": "TÍTULOS",
+    "greeting": "Olá, {{name}}.",
+    "greeting_sub": "O que vamos escrever hoje?",
+    "credits_available": "disponíveis",
+    "chapters": "capítulos",
+    "new_project": "Novo projeto",
+    "filter_all": "Todos",
+    "filter_active": "Ativos",
+    "filter_archived": "Arquivados",
+    "sorted_by": "Ordenado por edição recente",
+    "loading": "Carregando projetos…",
+    "no_projects": "Nenhum projeto neste filtro ainda.",
+    "restore_project": "Restaurar projeto",
+    "archive_project": "Arquivar projeto",
+    "delete_project": "Excluir projeto",
+    "chapters_abbr": "cap.",
+    "new_book_cta": "Começar um novo livro",
+    "new_book_sub": "do zero ou importando um arquivo",
+    "modal_title": "Novo projeto",
+    "cancel": "Cancelar",
+    "create_project": "Criar projeto",
+    "title_label": "Título",
+    "title_placeholder": "O nome da sua obra",
+    "genres_label": "Gênero(s) literário(s)",
+    "select_genre": "Selecione um gênero…",
+    "custom_genre_label": "Temas personalizados",
+    "custom_genre_placeholder": "Ex: Steampunk, Distopia…",
+    "add_genre": "Adicionar",
+    "synopsis_label": "Sinopse (opcional)",
+    "synopsis_placeholder": "Em uma ou duas frases…",
+    "delete_title": "Excluir \"{{title}}\"",
+    "delete_description": "Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita — todos os capítulos serão perdidos.",
+    "delete_confirm": "Excluir projeto",
+    "status_active": "Ativo",
+    "status_archived": "Arquivado"
+  },
+  "project": {
+    "back": "Meus projetos",
+    "error_eyebrow": "ERRO 404 · PROJETO NÃO ENCONTRADO",
+    "error_title": "Este projeto",
+    "error_title_em": "nunca foi escrito.",
+    "error_description": "O projeto que você buscou não existe no nosso manuscrito. Talvez tenha sido removido ou o link esteja errado.",
+    "error_back": "← Voltar ao dashboard",
+    "loading": "Carregando projeto…",
+    "edit_title": "Editar nome do projeto",
+    "edit_synopsis": "Editar sinopse",
+    "add_synopsis": "Adicionar sinopse…",
+    "chapters_one": "capítulo",
+    "chapters_other": "capítulos",
+    "words": "palavras",
+    "export_book": "Exportar livro",
+    "export_docx": "Exportar como .docx",
+    "export_pdf": "Exportar como PDF",
+    "import_file": "Importar arquivo",
+    "new_chapter": "Novo capítulo",
+    "blank_page": "A página em branco.",
+    "blank_sub": "Por onde começar? Importe um arquivo ou crie um capítulo do zero.",
+    "import_btn": "Importar",
+    "create_chapter_btn": "Criar capítulo",
+    "drag_reorder": "Arrastar para reordenar",
+    "edit_chapter_title": "Editar título",
+    "delete_chapter": "Excluir capítulo",
+    "blank_chapter": "página em branco",
+    "words_count": "palavras",
+    "read_min": "min de leitura",
+    "chapter_number": "Capítulo {{number}}",
+    "new_chapter_modal": "Novo capítulo",
+    "chapter_title_label": "Título do capítulo (opcional)",
+    "chapter_title_placeholder": "Ex: O início da jornada",
+    "create_and_open": "Criar e abrir",
+    "cancel": "Cancelar",
+    "delete_chapter_title": "Excluir \"{{title}}\"",
+    "delete_chapter_description": "Tem certeza que deseja excluir este capítulo? Os capítulos restantes serão renumerados automaticamente.",
+    "delete_chapter_confirm": "Excluir capítulo",
+    "import_modal_title": "Importar arquivo",
+    "import_drop_label": "Arraste seu .docx, .txt ou .pdf aqui",
+    "import_drop_sub": "ou clique para selecionar",
+    "import_ready": "pronto para importar",
+    "import_chapter_title_label": "Título do capítulo (opcional)",
+    "import_chapter_title_placeholder": "Deixe vazio para usar o nome do arquivo",
+    "import_confirm": "Importar",
+    "status_active": "Ativo",
+    "status_archived": "Arquivado",
+    "no_genre": "Sem gênero"
+  },
+  "chapter": {
+    "error_eyebrow": "ERRO 404 · CAPÍTULO NÃO ENCONTRADO",
+    "error_title": "Este capítulo",
+    "error_title_em": "ainda não foi escrito.",
+    "error_description": "O capítulo que você buscou não existe. Talvez tenha sido removido ou o link esteja errado.",
+    "error_back": "← Voltar ao projeto",
+    "loading": "Carregando capítulo…",
+    "back": "← Projeto",
+    "saving": "Salvando…",
+    "saved_at": "Salvo às {{time}}",
+    "save": "Salvar",
+    "words": "palavras",
+    "read_min": "leitura",
+    "focus_mode": "Foco",
+    "show_analysis": "Análise",
+    "export": "Exportar",
+    "export_docx": "Exportar como .docx",
+    "export_pdf": "Exportar como PDF",
+    "selection": "selecionado",
+    "fiction": "FICÇÃO",
+    "outline": "SUMÁRIO",
+    "dates": "DATAS",
+    "created_at": "Criado em",
+    "updated_at_label": "Editado em",
+    "outline_hint": "Digite # seguido de espaço para criar títulos de seção",
+    "hide_analysis": "Esconder IA",
+    "characters": "caracteres",
+    "plan_limit_reached": "⚠ Limite do plano atingido",
+    "plan_limit_pct": "{{pct}}% do limite",
+    "hint_title": "Título",
+    "hint_subtitle": "Subtítulo",
+    "hint_bold": "Negrito",
+    "hint_italic": "Itálico",
+    "hint_quote": "Citação"
+  },
+  "analysis": {
+    "header_book": "ANÁLISE DO LIVRO",
+    "header_chapter": "ANÁLISE COM IA",
+    "how_it_works": "COMO FUNCIONA",
+    "how_it_works_text": "Escolha o tipo de análise acima e clique em Executar. A IA vai ler seu texto e devolver observações editoriais precisas.",
+    "reader_profiles": "PERFIS DE LEITOR",
+    "previous": "ANÁLISES ANTERIORES",
+    "selected_excerpt": "TRECHO SELECIONADO",
+    "select_excerpt_warning": "Selecione um trecho no editor para usar a Análise Local.",
+    "select_chapter_warning": "Selecione um capítulo para usar este tipo de análise.",
+    "insufficient_credits": "Créditos insuficientes para esta análise.",
+    "insufficient_credits_count": "Créditos insuficientes ({{cost}} necessários).",
+    "select_profiles": "Selecione ao menos um perfil para continuar.",
+    "weekly_limit": "Plano {{plan}}: limite de {{limit}} simulações por semana.",
+    "book_reader_note": "Cada perfil lê o manuscrito completo — resultado mais fiel que por capítulo.",
+    "what_you_need": "O que você precisa?",
+    "creative_placeholder": "Ex: Preciso de ideias para a virada do capítulo 3…",
+    "analyzing": "Analisando…",
+    "run_locked": "Análise bloqueada no seu plano",
+    "run_choose_profiles": "Escolha os perfis",
+    "run_select_excerpt": "Selecione um trecho",
+    "run_execute": "Executar · {{cost}} crédito",
+    "run_execute_plural": "Executar · {{cost}} créditos",
+    "per_profile": "cr./perfil",
+    "credits_abbr": "cr.",
+    "reader_simulation": "Simulação de Leitores",
+    "reading_style": "Estilo de leitura",
+    "favorite_genres": "Gêneros favoritos",
+    "evaluation_criteria": "Critérios de avaliação",
+    "review_tone": "Tom das resenhas",
+    "view_full_profile": "Ver perfil completo",
+    "types": {
+      "local": {
+        "label": "Análise Local",
+        "sub": "Trecho selecionado. Estilo, ritmo, palavras repetidas."
+      },
+      "local_context": {
+        "label": "Análise Narrativa",
+        "sub": "Trecho + contexto do capítulo. Coerência narrativa."
+      },
+      "general_context": {
+        "label": "Análise Geral",
+        "sub": "Contexto do Capítulo. Arco, conflito, personagem."
+      },
+      "total": {
+        "label": "Análise Total",
+        "sub": "Capítulo completo em texto bruto. Visão detalhada."
+      },
+      "reader_simulation": {
+        "label": "Simulação de Leitores",
+        "sub": "Escolha os perfis que vão reagir ao capítulo."
+      },
+      "creative_suggestion": {
+        "label": "Sugestão Criativa",
+        "sub": "Direções, viradas, possíveis caminhos."
+      },
+      "book_general": {
+        "label": "Análise Geral do Livro",
+        "sub": "Contexto do Livro Inteiro. Estrutura, arco, personagens."
+      },
+      "book_total": {
+        "label": "Análise Total do Livro",
+        "sub": "Manuscrito completo em texto bruto. Visão de obra."
+      },
+      "book_reader_simulation": {
+        "label": "Simulação de Leitores",
+        "sub": "Perfis lendo o livro inteiro. Mais preciso que por capítulo."
+      }
+    },
+    "profiles": {
+      "luna": {
+        "role": "Leitora Casual · Nível 1",
+        "tagline": "Âncora no gosto popular. Representa quem compra o livro na livraria sem saber teoria literária.",
+        "reading_style": "Lê pelo prazer puro, sem pressão de terminar. Abandona livros sem culpa.",
+        "criteria": "Gostei ou não gostei. Ritmo rápido, personagens carismáticos, final satisfatório.",
+        "review_tone": "Animado, emoji liberado, nota de 1 a 5 estrelas com justificativa breve.",
+        "bio": "Entra no sistema com energia de fandom. Não sabe o nome dos recursos literários, mas sabe exatamente quando um livro \"virou\" para ela. Sua força é representar o leitor médio com honestidade.",
+        "strengths": [
+          "Perspectiva popular",
+          "Alta velocidade de leitura",
+          "Sem preconceito de gênero"
+        ],
+        "level": "⭐ Iniciante",
+        "genres": ["Romance", "Distopia YA", "Fanfiction"]
+      },
+      "rafael": {
+        "role": "Leitor de Gênero · Nível 2",
+        "tagline": "Sabe quando um thriller é previsível demais ou quando uma fantasia tem world-building frouxo.",
+        "reading_style": "Lê em surtos compulsivos. Consome séries inteiras num fim de semana.",
+        "criteria": "Tensão narrativa, world-building envolvente, reviravoltas e personagens com arcos bem construídos.",
+        "review_tone": "Caloroso mas com opiniões firmes. Usa comparações com outros títulos do gênero.",
+        "bio": "Mantém uma lista de leitura gigante e orgulhosa. Conhece bem as convenções do gênero e sabe quando uma obra as subverte com inteligência ou só faz o feijão com arroz.",
+        "strengths": [
+          "Convenções de gênero",
+          "Senso de ritmo narrativo",
+          "Capacidade comparativa"
+        ],
+        "level": "⭐⭐ Entusiasta",
+        "genres": ["Thriller", "Fantasia Épica", "Ficção Científica Soft"]
+      },
+      "camila": {
+        "role": "Leitora Culta · Nível 3",
+        "tagline": "Culta sem ser inacessível. Contextualiza sem afastar o leitor médio — a voz mais versátil.",
+        "reading_style": "Leitura metódica com anotações. Busca entender o contexto histórico e cultural do autor.",
+        "criteria": "Coerência interna, voz autoral, como o livro se posiciona dentro do seu tempo e tradição literária.",
+        "review_tone": "Equilibrado entre subjetividade e análise. Cita trechos para fundamentar opiniões.",
+        "bio": "Faz a ponte entre o leitor comum e o especialista. Leu o suficiente para perceber influências e diálogos entre obras, mas ainda escreve para ser entendida por qualquer um.",
+        "strengths": [
+          "Leitura contextualizada",
+          "Voz acessível e precisa",
+          "Identifica intertextualidade"
+        ],
+        "level": "⭐⭐⭐ Intermediária",
+        "genres": [
+          "Lit. Contemporânea",
+          "Ensaio",
+          "Realismo Mágico",
+          "Memórias"
+        ]
+      },
+      "mateus": {
+        "role": "Leitor Técnico · Nível 4",
+        "tagline": "Cirúrgico. Vai direto à prosa, sintaxe e escolhas formais. Indispensável para obras literárias sérias.",
+        "reading_style": "Lento e deliberado. Relê capítulos. Presta atenção obsessiva à prosa, sintaxe e estrutura.",
+        "criteria": "Uso da linguagem, escolhas de narrador, ambiguidade produtiva, como o texto cria sentido além do enredo.",
+        "review_tone": "Denso, preciso, às vezes difícil — mas nunca hermético por descuido.",
+        "bio": "Formação em Letras, pratica escrita criativa e tem opiniões fortes sobre pontuação. Vai dissecar a estrutura de uma oração antes de falar sobre o enredo. Inestimável para avaliar obras literárias sérias.",
+        "strengths": [
+          "Análise estilística",
+          "Teoria literária aplicada",
+          "Identifica falhas de construção"
+        ],
+        "level": "⭐⭐⭐⭐ Avançado",
+        "genres": [
+          "Lit. Modernista",
+          "Ficção Experimental",
+          "Contos",
+          "Poesia em Prosa"
+        ]
+      },
+      "vera": {
+        "role": "Crítica Literária · Nível 5",
+        "tagline": "A voz mais incômoda — e por isso a mais importante. Avalia o que o livro representa.",
+        "reading_style": "Lê como ato político e filosófico. Questiona quem publica, quem narra, quem é silenciado.",
+        "criteria": "Posição ideológica, representatividade, originalidade dentro do cânone e subversão de expectativas.",
+        "review_tone": "Contundente, rigoroso, profundamente referenciado. Não poupa nem clássicos intocáveis.",
+        "bio": "Décadas de leitura e escrita crítica. Vera enxerga um livro como documento cultural, não apenas como entretenimento ou arte. A voz mais desafiadora — e mais necessária — do sistema.",
+        "strengths": [
+          "Crítica cultural e ideológica",
+          "Cânone e contra-cânone",
+          "Análise de representatividade",
+          "Perspectiva histórica ampla"
+        ],
+        "level": "⭐⭐⭐⭐⭐ Expert",
+        "genres": [
+          "Lit. Periférica",
+          "Ficção Pós-colonial",
+          "Autoficção",
+          "Ensaio Crítico"
+        ]
+      },
+      "heitor": {
+        "role": "Leitor Acadêmico · Nível 6",
+        "tagline": "Lê a obra como parte de um sistema maior: tradição, forma, recepção, mercado e contexto histórico.",
+        "reading_style": "Lento e ensaístico. Anota referências, compara com outros textos, busca o diálogo intertextual.",
+        "criteria": "Densidade conceitual, arquitetura formal, tensão entre forma e conteúdo, diálogo intertextual.",
+        "review_tone": "Ensaístico, exigente e sofisticado, sem simplificar demais. Usa referências literárias e teóricas.",
+        "bio": "Pesquisador de literatura comparada e teoria crítica. Aprecia obras difíceis e textos que dialogam com história, estética e pensamento social. A leitura mais densa e mais rara do sistema.",
+        "strengths": [
+          "Literatura comparada",
+          "Teoria crítica aplicada",
+          "Perspectiva histórica e filosófica",
+          "Intertextualidade"
+        ],
+        "level": "⭐⭐⭐⭐⭐⭐ Acadêmico",
+        "genres": [
+          "Romances Filosóficos",
+          "Lit. Experimental",
+          "Tragédia Clássica",
+          "Teoria Crítica"
+        ]
+      }
+    }
+  },
+  "genres": {
+    "fantasy": "Fantasia",
+    "romance": "Romance",
+    "mystery": "Mistério",
+    "horror": "Terror",
+    "action": "Ação",
+    "adventure": "Aventura",
+    "children": "Infantil",
+    "young_adult": "Jovem Adulto",
+    "sci_fi": "Ficção Científica",
+    "thriller": "Thriller",
+    "historical": "Histórico",
+    "biography": "Biografia",
+    "self_help": "Autoajuda",
+    "other": "Outro"
+  },
+  "plans": {
+    "free": "Rascunho",
+    "basic": "Autor",
+    "premium": "Obra Completa"
+  },
+  "analysis_labels": {
+    "local": "Análise Local (1 crédito)",
+    "local_context": "Análise Narrativa (2 créditos)",
+    "general_context": "Análise Geral do Capítulo (2 créditos)",
+    "total": "Análise Total do Capítulo (3 créditos)",
+    "reader_simulation": "Simulação de Leitores (1 cr./perfil)",
+    "creative_suggestion": "Sugestão Criativa (1 crédito)",
+    "book_general": "Análise Geral do Livro (4 créditos)",
+    "book_total": "Análise Total do Livro (6 créditos)",
+    "book_reader_simulation": "Simulação de Leitores — Livro (2 cr./perfil)"
+  },
+  "upgrade": {
+    "title": "Recurso bloqueado",
+    "description": "{{feature}} requer o plano {{plan}} ou superior.",
+    "close": "Fechar",
+    "upgrade": "Ver planos"
+  },
+  "confirm": {
+    "cancel": "Cancelar",
+    "delete_account_title": "Excluir conta",
+    "delete_account_description": "Tem certeza que deseja excluir sua conta? Todos os seus projetos e dados serão removidos permanentemente.",
+    "delete_account_confirm": "Excluir conta",
+    "link_google_title": "Vincular ao Google?",
+    "link_google_description": "Já existe uma conta com o email {{email}}. Deseja vincular essa conta ao login do Google? Você poderá entrar dos dois jeitos depois.",
+    "link_google_confirm": "Vincular conta",
+    "link_google_cancel": "Usar email e senha"
+  },
+  "not_found": {
+    "eyebrow": "ERRO 404 · PÁGINA NÃO ENCONTRADA",
+    "title": "Esta página",
+    "title_em": "nunca foi escrita.",
+    "description": "Você abriu um capítulo que não existe no nosso manuscrito. Talvez tenha sido um link antigo, talvez um erro de digitação — ou talvez, simplesmente, ainda esteja por vir.",
+    "back": "← Voltar ao início",
+    "back_header": "← Voltar",
+    "sign_in": "Entrar na minha conta",
+    "create_account": "Criar uma conta"
+  },
+  "language": {
+    "selector_label": "Idioma",
+    "pt-br": "Português",
+    "en": "English",
+    "fr": "Français",
+    "es": "Español"
+  }
+}

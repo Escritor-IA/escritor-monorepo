@@ -1,0 +1,155 @@
+{
+  "nav": {
+    "editor": "The Editor",
+    "features": "Features",
+    "plans": "Plans",
+    "about": "About",
+    "login": "Sign in",
+    "register": "Get started"
+  },
+  "hero": {
+    "eyebrow": "In beta",
+    "h1_before": "A partner for those who ",
+    "h1_em": "write.",
+    "sub": "The first Brazilian platform for fiction writing support. It reads your text and returns narrative coherence, simulated reader reactions, and suggestions — always on request, always in your voice. It never writes for you.",
+    "cta_primary": "Get started",
+    "cta_secondary": "View plans",
+    "note": "free up to 5,000 words · no credit card",
+    "mockup_hint": "Illustrative image only",
+    "scroll_cue": "keep reading"
+  },
+  "product": {
+    "eyebrow": "— the editor, from the inside",
+    "h2_before": "Margin notes. ",
+    "h2_em": "Authorial voice",
+    "h2_after": " intact.",
+    "p1": "Upload a chapter or the entire manuscript. Escritor.AI reads the text through the lens of the genre you declare — fantasy, mystery, young adult, romance — and returns precise annotations in the margin. Character coherence. Scene continuity. Rhythm. Voice.",
+    "p2": "Suggestions only appear when you ask. The tool never replaces a paragraph of yours; at most, it proposes three paths and leaves the choice to who always had the choice: you."
+  },
+  "features": {
+    "eyebrow": "Features",
+    "h2_before": "Where other tools ",
+    "h2_em": "fall short",
+    "h2_after": ", yours begins.",
+    "lead": "Jasper, QuillBot, Clarice.ai — all excellent for marketing copy. None made for Brazilian literary fiction. Escritor.AI is the first.",
+    "items": [
+      {
+        "n": "01",
+        "h_before": "Calibrated by ",
+        "h_em": "genre",
+        "h_after": ", not marketing niche.",
+        "body": "Fantasy has different rules than romance, which has different rules than young adult. Escritor.AI adjusts its lens based on your work's declared genre — not an SEO template.",
+        "glyph": "fantasy · mystery · young adult · romance"
+      },
+      {
+        "n": "02",
+        "h_before": "",
+        "h_em": "Simulated readers",
+        "h_after": ". Reaction before publishing.",
+        "body": "Choose from 3 to 6 reader profiles — beginner, genre reader, critical reading. See where each one stays hooked, where they disengage, and which scene closes the book for the first time.",
+        "glyph": "3 to 6 profiles · scene-level feedback"
+      },
+      {
+        "n": "03",
+        "h_before": "Your voice, at the center. ",
+        "h_em": "Always",
+        "h_after": ".",
+        "body": "No generating the next paragraph for you. No homogenizing your style. Escritor.AI learns your authorial voice from chapters you've already written, and uses that as the benchmark for its own suggestions.",
+        "glyph": "not a co-author. a partner."
+      }
+    ]
+  },
+  "plans": {
+    "eyebrow": "Plans",
+    "h2_before": "Pay ",
+    "h2_em": "less",
+    "h2_after": " than a coffee per revised chapter.",
+    "lead": "Professionally editing an 80,000-word novel costs between R$2,400 and R$6,400. Here, you follow the entire process for the price of a subscription.",
+    "most_chosen": "Most popular",
+    "free": {
+      "name": "Draft",
+      "desc": "For those starting to find their way.",
+      "per": "/forever",
+      "meta": "No credit card · no deadline",
+      "cta": "Create account",
+      "feats": [
+        "Up to 5,000 words per chapter",
+        "10 initial monthly credits",
+        "Basic narrative coherence",
+        "1 simulated reader per month",
+        "Full Manuscript Analysis",
+        "On-demand point suggestions"
+      ]
+    },
+    "author": {
+      "name": "Author",
+      "desc": "For those actively writing the work.",
+      "per": "/month",
+      "meta": "Annual billing: R$ 24/mo",
+      "cta": "Start 14 days free",
+      "feats": [
+        "Up to 15,000 words per chapter",
+        "60 initial monthly credits",
+        "Genre-calibrated annotations",
+        "3 simulated reader profiles",
+        "On-demand suggestions",
+        "Version history"
+      ]
+    },
+    "complete": {
+      "name": "Complete Work",
+      "desc": "For those finishing the book.",
+      "per": "/month",
+      "meta": "Annual billing: R$ 49/mo",
+      "cta": "Talk to us",
+      "feats": [
+        "Everything in Author plan",
+        "Unlimited text per chapter",
+        "150 initial monthly credits",
+        "Critical reading for long chapters",
+        "6 simulated reader profiles"
+      ]
+    }
+  },
+  "final_cta": {
+    "h_before": "The next chapter is yours. The ",
+    "h_em": "tool",
+    "h_after": " is ours.",
+    "sub": "Start with the free plan now. Upload an excerpt from your book, choose the genre, and watch the margin fill with annotations in seconds.",
+    "cta_primary": "Get started",
+    "cta_secondary": "View plans",
+    "signoff_line1": "\"Never writes for you.",
+    "signoff_line2": "Always at the service of those who create.\""
+  },
+  "footer": {
+    "tagline": "The first Brazilian platform for fiction writing support. For independent writers who want to write with quality, not just speed.",
+    "col_product": "Product",
+    "col_company": "Company",
+    "col_community": "Community",
+    "link_editor": "The editor",
+    "link_features": "Features",
+    "link_plans": "Plans",
+    "link_genres": "Supported genres",
+    "link_about": "About us",
+    "link_manifesto": "Manifesto",
+    "link_contact": "Contact",
+    "link_careers": "Careers",
+    "link_blog": "Writer's blog",
+    "link_newsletter": "Monthly newsletter",
+    "link_discord": "Discord",
+    "link_terms": "Terms & privacy",
+    "copyright": "© 2026 Escritor.AI — InnovaTech",
+    "made_in": "made in Brazil ✦"
+  },
+  "mockup": {
+    "revision": "Revision",
+    "rewrite": "Rewrite",
+    "readers": "Readers",
+    "versions": "Versions",
+    "coherence": "Coherence",
+    "voice": "Authorial voice",
+    "word_count": "7,842 words · ch. 7 of 12",
+    "annotation_label": "Annotations · line 7",
+    "reader_label": "Simulated readers · ch. 7"
+  }
+}

@@ -223,6 +223,7 @@ body::before {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes pulseDot { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes caret { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .fade-in { animation: fadeIn .35s ease both; }
 .typing-caret::after {

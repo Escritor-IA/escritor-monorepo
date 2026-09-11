@@ -1,33 +1,35 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Chapter, Project, ProjectGenre } from "@/types";
-import { GENRE_LABELS } from "@/types";
+import { useTranslation } from "react-i18next";
+import type { Chapter, Project } from "@/types";
 import { chaptersApi } from "@/api/chapters";
 import { projectsApi } from "@/api/projects";
 import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
 import { ChapterEditor } from "@/components/Editor/ChapterEditor";
 import { Button } from "@/components/UI/Button";
 import { exportChapterDocx, exportChapterPdf } from "@/utils/export";
-
-function formatGenres(genres: string[]): string {
-  if (!genres.length) return "FICÇÃO";
-  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ").toUpperCase();
-}
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { ResourceNotFound } from "@/components/UI/ResourceNotFound";
+import { ErrorCard } from "@/components/UI/ErrorCard";
+import { getErrorMessage } from "@/utils/errors";
 
 const AUTOSAVE_DELAY = 2000;
 
 export function ChapterPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const chapterId = id!;
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(true);
   const [showOutline, setShowOutline] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
@@ -47,23 +49,29 @@ export function ChapterPage() {
     }).then(({ data }) => {
       setProject(data);
       setLoading(false);
+    }).catch(() => {
+      setNotFound(true);
+      setLoading(false);
     });
   }, [chapterId]);
 
   const save = useCallback(async (latestContent: string, latestTitle: string) => {
     setSaving(true);
+    setSaveError(null);
     try {
       const { data } = await chaptersApi.update(chapterId, { content: latestContent, title: latestTitle });
       setChapter(data);
       setSavedAt(new Date());
+    } catch (err) {
+      setSaveError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setSaving(false);
     }
-  }, [chapterId]);
+  }, [chapterId, t]);
 
-  const scheduleAutosave = (c: string, t: string) => {
+  const scheduleAutosave = (c: string, tl: string) => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(() => save(c, t), AUTOSAVE_DELAY);
+    autosaveTimer.current = setTimeout(() => save(c, tl), AUTOSAVE_DELAY);
   };
 
   const handleContentChange = (val: string) => {
@@ -94,7 +102,6 @@ export function ChapterPage() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [handleManualSave]);
 
-  // Close export menu when clicking outside
   useEffect(() => {
     if (!exportMenuOpen) return;
     const close = (e: MouseEvent) => {
@@ -106,7 +113,6 @@ export function ChapterPage() {
     return () => document.removeEventListener("mousedown", close);
   }, [exportMenuOpen]);
 
-  // Fullscreen (real browser fullscreen)
   const handleFocusMode = async () => {
     if (!focusMode) {
       try { await document.documentElement.requestFullscreen(); } catch { /* unsupported */ }
@@ -119,7 +125,6 @@ export function ChapterPage() {
     }
   };
 
-  // Sync state if user presses Esc to exit fullscreen
   useEffect(() => {
     const onFsChange = () => {
       if (!document.fullscreenElement) setFocusMode(false);
@@ -128,7 +133,6 @@ export function ChapterPage() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  // Stats — strip HTML tags to count real words/chars
   const plainText = useMemo(() => {
     if (!content) return "";
     const div = document.createElement("div");
@@ -139,9 +143,17 @@ export function ChapterPage() {
   const wordCount = useMemo(() => plainText.trim().split(/\s+/).filter(Boolean).length, [plainText]);
   const charCount = plainText.length;
   const readingMin = Math.max(1, Math.round(wordCount / 250));
-  const fmt = (d: Date) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  // Outline — extract headings from HTML
+  const planLimits = usePlanLimits();
+  const wordLimit = planLimits.chapterWordLimit;
+  const wordLimitPct = wordLimit ? wordCount / wordLimit : null;
+  const wordLimitColor =
+    wordLimitPct === null ? "var(--ink)"
+    : wordLimitPct >= 1 ? "var(--red)"
+    : wordLimitPct >= 0.85 ? "var(--amber)"
+    : "var(--ink)";
+
   const outline = useMemo(() => {
     if (!content) return [];
     const div = document.createElement("div");
@@ -153,26 +165,36 @@ export function ChapterPage() {
     }));
   }, [content]);
 
-  // Scroll to heading in the real editor DOM
   const scrollToHeading = (index: number) => {
     if (!editorScrollRef.current) return;
     const headings = editorScrollRef.current.querySelectorAll("h1, h2");
     headings[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const formatGenres = (genres: string[]) => {
+    if (!genres.length) return t("chapter.fiction");
+    return genres.map((g) => t(`genres.${g}`, g)).join(", ").toUpperCase();
+  };
+
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--paper)", color: "var(--ink-3)" }}>
-        Carregando capítulo…
+        {t("chapter.loading")}
       </div>
     );
   }
 
-  if (!chapter || !project) {
+  if (notFound || !chapter || !project) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--paper)", color: "var(--ink-3)" }}>
-        Capítulo não encontrado.
-      </div>
+      <ResourceNotFound
+        eyebrow={t("chapter.error_eyebrow")}
+        title={t("chapter.error_title")}
+        titleEm={t("chapter.error_title_em")}
+        description={t("chapter.error_description")}
+        backLabel={t("chapter.error_back")}
+        backTo="/dashboard"
+        cardLabel="CAPÍTULO Nº 404"
+      />
     );
   }
 
@@ -181,6 +203,14 @@ export function ChapterPage() {
   const cols = focusMode
     ? "1fr"
     : [showLeft ? "212px" : "0px", "minmax(0, 1fr)", showRight ? "380px" : "0px"].join(" ");
+
+  const hintItems = [
+    { keys: "# ", label: t("chapter.hint_title") },
+    { keys: "## ", label: t("chapter.hint_subtitle") },
+    { keys: "**negrito**", label: t("chapter.hint_bold") },
+    { keys: "_itálico_", label: t("chapter.hint_italic") },
+    { keys: "> ", label: t("chapter.hint_quote") },
+  ];
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "var(--paper)", overflow: "hidden" }}>
@@ -203,7 +233,7 @@ export function ChapterPage() {
           <input
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder={`Capítulo ${chapter.number}`}
+            placeholder={t("project.chapter_number", { number: chapter.number })}
             style={{
               flex: 1, minWidth: 0,
               fontFamily: "var(--serif)",
@@ -216,19 +246,19 @@ export function ChapterPage() {
             {saving ? (
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)", animation: "pulseDot 1s infinite" }} />
-                Salvando…
+                {t("chapter.saving")}
               </span>
             ) : savedAt ? (
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }} />
-                Salvo às {fmt(savedAt)}
+                {t("chapter.saved_at", { time: fmt(savedAt) })}
               </span>
             ) : null}
           </div>
 
           <button
             className="btn btn-ghost btn-sm"
-            title="Sumário"
+            title={t("chapter.outline")}
             onClick={() => setShowOutline(!showOutline)}
             style={{ color: showOutline && !focusMode ? "var(--ink)" : "var(--ink-3)" }}
           >
@@ -236,22 +266,21 @@ export function ChapterPage() {
           </button>
           <button
             className="btn btn-ghost btn-sm"
-            title={focusMode ? "Sair do modo foco" : "Modo foco (tela cheia)"}
+            title={t("chapter.focus_mode")}
             onClick={handleFocusMode}
             style={{ color: focusMode ? "var(--green)" : "var(--ink-3)" }}
           >
             <FocusIcon />
           </button>
           <Button size="sm" variant="secondary" onClick={handleManualSave} disabled={saving}>
-            Salvar
+            {t("chapter.save")}
           </Button>
 
-          {/* Export chapter dropdown */}
           {chapter && (
             <div ref={exportMenuRef} style={{ position: "relative" }}>
               <button
                 className="btn btn-ghost btn-sm"
-                title="Exportar capítulo"
+                title={t("chapter.export")}
                 onClick={() => setExportMenuOpen((v) => !v)}
                 style={{ color: "var(--ink-3)", gap: 4 }}
               >
@@ -264,8 +293,8 @@ export function ChapterPage() {
                   borderRadius: 10, boxShadow: "var(--sh-2)", minWidth: 168, overflow: "hidden",
                 }}>
                   {[
-                    { label: "Exportar como .docx", action: () => void exportChapterDocx({ ...chapter, content }) },
-                    { label: "Exportar como PDF", action: () => exportChapterPdf({ ...chapter, content }) },
+                    { label: t("chapter.export_docx"), action: () => void exportChapterDocx({ ...chapter, content }) },
+                    { label: t("chapter.export_pdf"), action: () => exportChapterPdf({ ...chapter, content }) },
                   ].map(({ label, action }) => (
                     <button
                       key={label}
@@ -287,9 +316,14 @@ export function ChapterPage() {
 
           <Button size="sm" variant="green" onClick={() => setShowAnalysis(!showAnalysis)}>
             <SparklesIcon />
-            {showAnalysis ? "Esconder IA" : "Análise com IA"}
+            {showAnalysis ? t("chapter.hide_analysis") : t("chapter.show_analysis")}
           </Button>
         </div>
+        {saveError && (
+          <div style={{ padding: "0 22px 12px" }}>
+            <ErrorCard message={saveError} onDismiss={() => setSaveError(null)} />
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -297,7 +331,7 @@ export function ChapterPage() {
         {/* Outline panel */}
         {showLeft && (
           <aside style={{ borderRight: "1px solid var(--card-edge)", padding: "28px 18px 24px 28px", overflowY: "auto", overflow: "hidden auto" }}>
-            <div className="eyebrow" style={{ marginBottom: 14 }}>SUMÁRIO</div>
+            <div className="eyebrow" style={{ marginBottom: 14 }}>{t("chapter.outline")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {outline.length > 0 ? outline.map((o, i) => (
                 <button
@@ -319,16 +353,16 @@ export function ChapterPage() {
                 </button>
               )) : (
                 <p style={{ fontSize: 12, color: "var(--ink-4)", fontStyle: "italic" }}>
-                  Digite # seguido de espaço para criar títulos de seção
+                  {t("chapter.outline_hint")}
                 </p>
               )}
             </div>
 
             <div style={{ marginTop: 28, padding: 14, background: "var(--paper-2)", borderRadius: 10 }}>
-              <div className="eyebrow" style={{ marginBottom: 10 }}>DATAS</div>
+              <div className="eyebrow" style={{ marginBottom: 10 }}>{t("chapter.dates")}</div>
               <div style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.7 }}>
-                <div>Criado em {new Date(chapter.created_at).toLocaleDateString("pt-BR")}</div>
-                <div>Editado em {new Date(chapter.updated_at).toLocaleDateString("pt-BR")}</div>
+                <div>{t("chapter.created_at")} {new Date(chapter.created_at).toLocaleDateString()}</div>
+                <div>{t("chapter.updated_at_label")} {new Date(chapter.updated_at).toLocaleDateString()}</div>
               </div>
             </div>
           </aside>
@@ -344,10 +378,10 @@ export function ChapterPage() {
               {/* Chapter header */}
               <div style={{ marginBottom: 28 }}>
                 <div className="eyebrow" style={{ marginBottom: 14 }}>
-                  CAPÍTULO {String(chapter.number).padStart(2, "0")} · {formatGenres(project.genres)}
+                  {t("project.chapter_number", { number: String(chapter.number).padStart(2, "0") })} · {formatGenres(project.genres)}
                 </div>
                 <h1 className="serif" style={{ fontSize: 40, fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1.08, color: "var(--ink)" }}>
-                  {title || `Capítulo ${chapter.number}`}
+                  {title || t("project.chapter_number", { number: chapter.number })}
                 </h1>
                 <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 4 }}>
                   <span style={{ height: 1, width: 36, background: "var(--green)" }} />
@@ -355,15 +389,9 @@ export function ChapterPage() {
                 </div>
               </div>
 
-              {/* Formatting hint bar — always visible */}
+              {/* Formatting hint bar */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-                {[
-                  { keys: "# ", label: "Título" },
-                  { keys: "## ", label: "Subtítulo" },
-                  { keys: "**negrito**", label: "Negrito" },
-                  { keys: "_itálico_", label: "Itálico" },
-                  { keys: "> ", label: "Citação" },
-                ].map((h) => (
+                {hintItems.map((h) => (
                   <span key={h.keys} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--ink-4)", background: "var(--paper-2)", borderRadius: 6, padding: "3px 8px" }}>
                     <code style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>{h.keys}</code>
                     {h.label}
@@ -388,10 +416,27 @@ export function ChapterPage() {
             display: "flex", justifyContent: "space-between", alignItems: "center",
             fontSize: 12, color: "var(--ink-3)", pointerEvents: "none",
           }}>
-            <div className="mono" style={{ display: "flex", gap: 18 }}>
-              <span><strong style={{ color: "var(--ink)" }}>{wordCount.toLocaleString("pt-BR")}</strong> palavras</span>
-              <span><strong style={{ color: "var(--ink)" }}>{charCount.toLocaleString("pt-BR")}</strong> caracteres</span>
-              <span>~<strong style={{ color: "var(--ink)" }}>{readingMin} min</strong> de leitura</span>
+            <div className="mono" style={{ display: "flex", gap: 18, alignItems: "center" }}>
+              <span>
+                <strong style={{ color: wordLimitColor }}>{wordCount.toLocaleString()}</strong>
+                {wordLimit ? (
+                  <> / <span style={{ color: "var(--ink-4)" }}>{wordLimit.toLocaleString()}</span> {t("chapter.words")}</>
+                ) : (
+                  <> {t("chapter.words")}</>
+                )}
+              </span>
+              <span><strong style={{ color: "var(--ink)" }}>{charCount.toLocaleString()}</strong> {t("chapter.characters")}</span>
+              <span>~<strong style={{ color: "var(--ink)" }}>{readingMin} min</strong> {t("chapter.read_min")}</span>
+              {wordLimitPct !== null && wordLimitPct >= 0.85 && (
+                <span style={{
+                  color: wordLimitPct >= 1 ? "var(--red)" : "var(--amber)",
+                  pointerEvents: "auto",
+                }}>
+                  {wordLimitPct >= 1
+                    ? t("chapter.plan_limit_reached")
+                    : t("chapter.plan_limit_pct", { pct: Math.round(wordLimitPct * 100) })}
+                </span>
+              )}
             </div>
             <div style={{ fontStyle: "italic", fontFamily: "var(--serif)", fontSize: 13, color: "var(--ink-4)" }}>
               "Escrever é o ato de coragem mais barato que existe."

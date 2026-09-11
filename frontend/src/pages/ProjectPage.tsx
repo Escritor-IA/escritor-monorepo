@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Project, Chapter, ProjectGenre, ProjectStatus } from "@/types";
-import { GENRE_LABELS } from "@/types";
+import { useTranslation } from "react-i18next";
+import type { Project, Chapter, ProjectStatus } from "@/types";
 import { projectsApi } from "@/api/projects";
 import { chaptersApi } from "@/api/chapters";
 import { AnalysisPanel } from "@/components/Analysis/AnalysisPanel";
 import { Layout } from "@/components/Layout/Layout";
+import { ResourceNotFound } from "@/components/UI/ResourceNotFound";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Modal } from "@/components/UI/Modal";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
+import { ErrorCard } from "@/components/UI/ErrorCard";
+import { getErrorMessage } from "@/utils/errors";
 import { countWords, exportBookDocx, exportBookPdf } from "@/utils/export";
 import {
   DndContext,
@@ -29,18 +33,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-function formatGenres(genres: string[]): string {
-  if (!genres.length) return "Sem gênero";
-  return genres.map((g) => GENRE_LABELS[g as ProjectGenre] ?? g).join(", ");
-}
-
 const STATUS_CHIP: Record<ProjectStatus, string> = {
   in_progress: "chip-progress",
   archived: "chip-paused",
-};
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  in_progress: "Ativo",
-  archived: "Arquivado",
 };
 
 // ── Sortable chapter card ──────────────────────────────────────
@@ -69,12 +64,21 @@ function SortableChapterCard({
   onNavigate,
 }: CardProps) {
   const [hovered, setHovered] = useState(false);
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: chapter.id,
   });
 
   const words = countWords(chapter.content);
   const readMin = Math.max(1, Math.round(words / 250));
+  const { chapterWordLimit } = usePlanLimits();
+  const barTarget = chapterWordLimit ?? 3_000;
+  const barPct = Math.min(100, (words / barTarget) * 100);
+  const barColor =
+    chapterWordLimit === null ? "var(--green)"
+    : barPct >= 100 ? "var(--red)"
+    : barPct >= 75 ? "var(--amber)"
+    : "var(--green)";
 
   return (
     <div
@@ -107,7 +111,7 @@ function SortableChapterCard({
         <div
           {...listeners}
           onClick={(e) => e.stopPropagation()}
-          title="Arrastar para reordenar"
+          title={t("project.drag_reorder")}
           style={{
             cursor: isDragging ? "grabbing" : "grab",
             color: hovered ? "var(--ink-4)" : "transparent",
@@ -149,10 +153,10 @@ function SortableChapterCard({
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div className="serif" style={{ fontSize: 19, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--ink)" }}>
-                {chapter.title || `Capítulo ${chapter.number}`}
+                {chapter.title || t("project.chapter_number", { number: chapter.number })}
               </div>
               <button
-                title="Editar título"
+                title={t("project.edit_chapter_title")}
                 onClick={(e) => { e.stopPropagation(); onStartEditTitle(chapter); }}
                 style={{
                   opacity: hovered ? 1 : 0, transition: "opacity .12s ease",
@@ -168,14 +172,14 @@ function SortableChapterCard({
           <div style={{ marginTop: 4, fontSize: 12, color: "var(--ink-3)", display: "flex", alignItems: "center", gap: 10 }}>
             {words > 0 ? (
               <>
-                <span style={{ fontFamily: "var(--mono)" }}>{words.toLocaleString("pt-BR")} palavras</span>
+                <span style={{ fontFamily: "var(--mono)" }}>{words.toLocaleString()} {t("project.words_count")}</span>
                 <Dot />
-                <span>~{readMin} min de leitura</span>
+                <span>~{readMin} {t("project.read_min")}</span>
                 <Dot />
-                <span>{new Date(chapter.updated_at).toLocaleDateString("pt-BR")}</span>
+                <span>{new Date(chapter.updated_at).toLocaleDateString()}</span>
               </>
             ) : (
-              <span style={{ fontStyle: "italic", color: "var(--ink-4)" }}>página em branco</span>
+              <span style={{ fontStyle: "italic", color: "var(--ink-4)" }}>{t("project.blank_chapter")}</span>
             )}
           </div>
         </div>
@@ -183,14 +187,14 @@ function SortableChapterCard({
         {/* Progress bar */}
         <div style={{ width: 90, opacity: words ? 1 : 0.3 }}>
           <div className="score-bar">
-            <div className="fill" style={{ width: Math.min(100, words / 50) + "%" }} />
+            <div className="fill" style={{ width: barPct + "%", background: barColor }} />
           </div>
         </div>
 
         {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
-            title="Excluir capítulo"
+            title={t("project.delete_chapter")}
             onClick={(e) => { e.stopPropagation(); onDelete(chapter, e); }}
             style={{ opacity: hovered ? 1 : 0, transition: "opacity .12s ease", color: "var(--ink-4)", padding: 6 }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "var(--red)")}
@@ -215,6 +219,7 @@ function SortableChapterCard({
 
 function ExportMenu({ onTxt, onDoc }: { onTxt: () => void; onDoc: () => void }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,7 +234,7 @@ function ExportMenu({ onTxt, onDoc }: { onTxt: () => void; onDoc: () => void }) 
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <Button variant="secondary" onClick={() => setOpen((v) => !v)}>
-        <DownloadIcon /> Exportar livro <ChevronDownIcon />
+        <DownloadIcon /> {t("project.export_book")} <ChevronDownIcon />
       </Button>
       {open && (
         <div style={{
@@ -238,8 +243,8 @@ function ExportMenu({ onTxt, onDoc }: { onTxt: () => void; onDoc: () => void }) 
           borderRadius: 10, boxShadow: "var(--sh-2)", minWidth: 160, overflow: "hidden",
         }}>
           {[
-            { label: "Exportar como .docx", action: onTxt },
-            { label: "Exportar como PDF", action: onDoc },
+            { label: t("project.export_docx"), action: onTxt },
+            { label: t("project.export_pdf"), action: onDoc },
           ].map(({ label, action }) => (
             <button
               key={label}
@@ -265,40 +270,42 @@ function ExportMenu({ onTxt, onDoc }: { onTxt: () => void; onDoc: () => void }) 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const projectId = id!;
 
   const [project, setProject] = useState<Project | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  // Project title inline edit
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
   const [projectTitleDraft, setProjectTitleDraft] = useState("");
 
-  // Project synopsis inline edit
   const [editingSynopsis, setEditingSynopsis] = useState(false);
   const [synopsisDraft, setSynopsisDraft] = useState("");
 
-  // Chapter title inline edit
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [chapterTitleDraft, setChapterTitleDraft] = useState("");
 
-  // Chapter modals
   const [newChapterOpen, setNewChapterOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [creatingChapter, setCreatingChapter] = useState(false);
+  const [createChapterError, setCreateChapterError] = useState<string | null>(null);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importTitle, setImportTitle] = useState("");
   const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const [deleteChapterTarget, setDeleteChapterTarget] = useState<Chapter | null>(null);
   const [deletingChapter, setDeletingChapter] = useState(false);
+  const [deleteChapterError, setDeleteChapterError] = useState<string | null>(null);
+
+  const [pageError, setPageError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // DnD sensors — requires 8px of movement before drag activates (prevents accidental drags on click)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -312,10 +319,11 @@ export function ProjectPage() {
         setChapters(list.sort((a, b) => a.number - b.number));
         setLoading(false);
       }
-    );
+    ).catch(() => {
+      setNotFound(true);
+      setLoading(false);
+    });
   }, [projectId]);
-
-  // ── Project title ──────────────────────────────────────────
 
   const handleStartEditProjectTitle = () => {
     if (!project) return;
@@ -326,8 +334,12 @@ export function ProjectPage() {
   const handleSaveProjectTitle = async () => {
     setEditingProjectTitle(false);
     if (!project || !projectTitleDraft.trim() || projectTitleDraft.trim() === project.title) return;
-    const { data } = await projectsApi.update(projectId, { title: projectTitleDraft.trim() });
-    setProject(data);
+    try {
+      const { data } = await projectsApi.update(projectId, { title: projectTitleDraft.trim() });
+      setProject(data);
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
   const handleStartEditSynopsis = () => {
@@ -339,11 +351,13 @@ export function ProjectPage() {
   const handleSaveSynopsis = async () => {
     setEditingSynopsis(false);
     if (!project || synopsisDraft === (project.synopsis ?? "")) return;
-    const { data } = await projectsApi.update(projectId, { synopsis: synopsisDraft });
-    setProject(data);
+    try {
+      const { data } = await projectsApi.update(projectId, { synopsis: synopsisDraft });
+      setProject(data);
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
-
-  // ── Chapter title ──────────────────────────────────────────
 
   const handleStartEditChapterTitle = (chapter: Chapter) => {
     setEditingChapterId(chapter.id);
@@ -353,15 +367,18 @@ export function ProjectPage() {
   const handleSaveChapterTitle = async (chapter: Chapter) => {
     setEditingChapterId(null);
     if (chapterTitleDraft === chapter.title) return;
-    const { data } = await chaptersApi.update(chapter.id, { title: chapterTitleDraft });
-    setChapters((prev) => prev.map((c) => (c.id === chapter.id ? data : c)));
+    try {
+      const { data } = await chaptersApi.update(chapter.id, { title: chapterTitleDraft });
+      setChapters((prev) => prev.map((c) => (c.id === chapter.id ? data : c)));
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
-
-  // ── Create chapter ─────────────────────────────────────────
 
   const handleCreateChapter = async (e: FormEvent) => {
     e.preventDefault();
     setCreatingChapter(true);
+    setCreateChapterError(null);
     try {
       const { data } = await chaptersApi.create(projectId, {
         number: chapters.length + 1,
@@ -372,33 +389,35 @@ export function ProjectPage() {
       setNewChapterOpen(false);
       setNewTitle("");
       navigate(`/chapters/${data.id}`);
+    } catch (err) {
+      setCreateChapterError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setCreatingChapter(false);
     }
   };
 
-  // ── Import ────────────────────────────────────────────────
-
   const handleImport = async (e: FormEvent) => {
     e.preventDefault();
     if (!importFile) return;
     setImporting(true);
+    setImportError(null);
     try {
       const { data } = await chaptersApi.import(projectId, importFile, importTitle);
       setChapters((prev) => [...prev, data]);
       setImportOpen(false);
       setImportFile(null);
       setImportTitle("");
+    } catch (err) {
+      setImportError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setImporting(false);
     }
   };
 
-  // ── Delete + auto-renumber ────────────────────────────────
-
   const handleConfirmDeleteChapter = async () => {
     if (!deleteChapterTarget) return;
     setDeletingChapter(true);
+    setDeleteChapterError(null);
     try {
       await chaptersApi.delete(deleteChapterTarget.id);
       const remaining = chapters
@@ -406,16 +425,15 @@ export function ProjectPage() {
         .map((c, i) => ({ ...c, number: i + 1 }));
       setChapters(remaining);
       setDeleteChapterTarget(null);
-      // Persist new numbers silently
       if (remaining.length > 0) {
         await Promise.all(remaining.map((c) => chaptersApi.update(c.id, { number: c.number })));
       }
+    } catch (err) {
+      setDeleteChapterError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setDeletingChapter(false);
     }
   };
-
-  // ── Drag-and-drop reorder ─────────────────────────────────
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -425,29 +443,40 @@ export function ProjectPage() {
     const newIdx = chapters.findIndex((c) => c.id === over.id);
     const reordered = arrayMove(chapters, oldIdx, newIdx).map((c, i) => ({ ...c, number: i + 1 }));
 
-    setChapters(reordered); // optimistic
-    await Promise.all(reordered.map((c) => chaptersApi.update(c.id, { number: c.number })));
+    setChapters(reordered);
+    try {
+      await Promise.all(reordered.map((c) => chaptersApi.update(c.id, { number: c.number })));
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
-  // ── Render ────────────────────────────────────────────────
+  const formatGenres = (genres: string[]) => {
+    if (!genres.length) return t("project.no_genre");
+    return genres.map((g) => t(`genres.${g}`, g)).join(", ");
+  };
 
   if (loading) {
     return (
       <Layout>
         <div style={{ textAlign: "center", padding: 64, color: "var(--ink-3)" }}>
-          Carregando projeto…
+          {t("project.loading")}
         </div>
       </Layout>
     );
   }
 
-  if (!project) {
+  if (notFound || !project) {
     return (
-      <Layout>
-        <p style={{ textAlign: "center", color: "var(--ink-3)", padding: 64 }}>
-          Projeto não encontrado.
-        </p>
-      </Layout>
+      <ResourceNotFound
+        eyebrow={t("project.error_eyebrow")}
+        title={t("project.error_title")}
+        titleEm={t("project.error_title_em")}
+        description={t("project.error_description")}
+        backLabel={t("project.error_back")}
+        backTo="/dashboard"
+        cardLabel="PROJETO Nº 404"
+      />
     );
   }
 
@@ -460,8 +489,12 @@ export function ProjectPage() {
         onClick={() => navigate("/dashboard")}
         style={{ fontSize: 13, color: "var(--ink-3)", display: "inline-flex", alignItems: "center", gap: 6 }}
       >
-        <BackIcon /> Meus projetos
+        <BackIcon /> {t("project.back")}
       </button>
+
+      {pageError && (
+        <ErrorCard message={pageError} onDismiss={() => setPageError(null)} style={{ marginTop: 12 }} />
+      )}
 
       {/* Project header */}
       <div style={{
@@ -469,7 +502,6 @@ export function ProjectPage() {
         gap: 24, flexWrap: "wrap", marginTop: 12, marginBottom: 28,
       }}>
         <div style={{ maxWidth: 700, flex: 1 }}>
-          {/* Editable project title */}
           {editingProjectTitle ? (
             <input
               value={projectTitleDraft}
@@ -497,7 +529,7 @@ export function ProjectPage() {
                 {project.title}
               </h1>
               <button
-                title="Editar nome do projeto"
+                title={t("project.edit_title")}
                 onClick={handleStartEditProjectTitle}
                 style={{ color: "var(--ink-4)", marginBottom: 2, padding: 4 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-2)")}
@@ -509,14 +541,18 @@ export function ProjectPage() {
           )}
 
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 14, color: "var(--ink-3)", fontSize: 14 }}>
-            <span className={`chip ${STATUS_CHIP[project.status]}`}>{STATUS_LABELS[project.status]}</span>
+            <span className={`chip ${STATUS_CHIP[project.status]}`}>
+              {project.status === "in_progress" ? t("project.status_active") : t("project.status_archived")}
+            </span>
             <span>{formatGenres(project.genres)}</span>
             <Dot />
-            <span>{chapters.length} capítulo{chapters.length !== 1 ? "s" : ""}</span>
+            <span>
+              {chapters.length} {chapters.length !== 1 ? t("project.chapters_other") : t("project.chapters_one")}
+            </span>
             {totalWords > 0 && (
               <>
                 <Dot />
-                <span style={{ fontFamily: "var(--mono)" }}>{totalWords.toLocaleString("pt-BR")} palavras</span>
+                <span style={{ fontFamily: "var(--mono)" }}>{totalWords.toLocaleString()} {t("project.words")}</span>
               </>
             )}
           </div>
@@ -532,7 +568,7 @@ export function ProjectPage() {
                   if (e.key === "Escape") setEditingSynopsis(false);
                 }}
                 autoFocus
-                placeholder="Adicione uma sinopse…"
+                placeholder={t("project.edit_synopsis")}
                 style={{
                   fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.6,
                   fontStyle: "italic", color: "var(--ink-2)",
@@ -549,11 +585,11 @@ export function ProjectPage() {
                   </p>
                 ) : (
                   <p className="serif" style={{ color: "var(--ink-4)", fontSize: 15, lineHeight: 1.6, fontStyle: "italic" }}>
-                    Adicionar sinopse…
+                    {t("project.add_synopsis")}
                   </p>
                 )}
                 <button
-                  title="Editar sinopse"
+                  title={t("project.edit_synopsis")}
                   onClick={handleStartEditSynopsis}
                   style={{ color: "var(--ink-4)", marginTop: 3, padding: 4, flexShrink: 0 }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-2)")}
@@ -573,11 +609,11 @@ export function ProjectPage() {
               onDoc={() => exportBookPdf(project, chapters)}
             />
           )}
-          <Button variant="secondary" onClick={() => setImportOpen(true)}>
-            <UploadIcon /> Importar arquivo
+          <Button variant="secondary" onClick={() => { setImportError(null); setImportOpen(true); }}>
+            <UploadIcon /> {t("project.import_file")}
           </Button>
-          <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
-            <PlusIcon /> Novo capítulo
+          <Button variant="primary" onClick={() => { setCreateChapterError(null); setNewChapterOpen(true); }}>
+            <PlusIcon /> {t("project.new_chapter")}
           </Button>
         </div>
       </div>
@@ -585,21 +621,20 @@ export function ProjectPage() {
       {/* Two-column layout */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 0, alignItems: "start", margin: "0 -24px" }}>
         <div style={{ padding: "0 24px" }}>
-          {/* Chapter list */}
           {chapters.length === 0 ? (
             <div className="card" style={{ padding: 64, textAlign: "center", color: "var(--ink-3)" }}>
               <div className="serif" style={{ fontSize: 28, color: "var(--ink-2)", fontStyle: "italic", marginBottom: 8 }}>
-                A página em branco.
+                {t("project.blank_page")}
               </div>
               <div style={{ fontSize: 14, marginBottom: 20 }}>
-                Por onde começar? Importe um arquivo ou crie um capítulo do zero.
+                {t("project.blank_sub")}
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-                <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                  <UploadIcon /> Importar
+                <Button variant="secondary" onClick={() => { setImportError(null); setImportOpen(true); }}>
+                  <UploadIcon /> {t("project.import_btn")}
                 </Button>
-                <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
-                  <PlusIcon /> Criar capítulo
+                <Button variant="primary" onClick={() => { setCreateChapterError(null); setNewChapterOpen(true); }}>
+                  <PlusIcon /> {t("project.create_chapter_btn")}
                 </Button>
               </div>
             </div>
@@ -637,37 +672,43 @@ export function ProjectPage() {
       <Modal
         open={newChapterOpen}
         onClose={() => setNewChapterOpen(false)}
-        title="Novo capítulo"
+        title={t("project.new_chapter_modal")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setNewChapterOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setNewChapterOpen(false)}>{t("project.cancel")}</Button>
             <Button variant="primary" loading={creatingChapter} onClick={handleCreateChapter}>
-              Criar e abrir
+              {t("project.create_and_open")}
             </Button>
           </>
         }
       >
-        <form onSubmit={handleCreateChapter}>
+        <form onSubmit={handleCreateChapter} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Input
-            label="Título do capítulo (opcional)"
-            placeholder="Ex: O início da jornada"
+            label={t("project.chapter_title_label")}
+            placeholder={t("project.chapter_title_placeholder")}
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             autoFocus
           />
+          {createChapterError && (
+            <ErrorCard message={createChapterError} onDismiss={() => setCreateChapterError(null)} />
+          )}
         </form>
       </Modal>
 
       {/* Delete chapter confirm */}
       {deleteChapterTarget && (
         <ConfirmDialog
-          title={`Excluir "${deleteChapterTarget.title || `Capítulo ${deleteChapterTarget.number}`}"`}
-          description="Tem certeza que deseja excluir este capítulo? Os capítulos restantes serão renumerados automaticamente."
-          confirmLabel="Excluir capítulo"
+          title={t("project.delete_chapter_title", {
+            title: deleteChapterTarget.title || t("project.chapter_number", { number: deleteChapterTarget.number }),
+          })}
+          description={t("project.delete_chapter_description")}
+          confirmLabel={t("project.delete_chapter_confirm")}
           danger
           loading={deletingChapter}
+          error={deleteChapterError}
           onConfirm={handleConfirmDeleteChapter}
-          onCancel={() => setDeleteChapterTarget(null)}
+          onCancel={() => { setDeleteChapterError(null); setDeleteChapterTarget(null); }}
         />
       )}
 
@@ -675,12 +716,12 @@ export function ProjectPage() {
       <Modal
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        title="Importar arquivo"
+        title={t("project.import_modal_title")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setImportOpen(false)}>{t("project.cancel")}</Button>
             <Button variant="primary" loading={importing} disabled={!importFile} onClick={handleImport}>
-              Importar
+              {t("project.import_confirm")}
             </Button>
           </>
         }
@@ -702,13 +743,13 @@ export function ProjectPage() {
             {importFile ? (
               <div>
                 <div style={{ color: "var(--ink)", fontWeight: 500 }}>{importFile.name}</div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>{Math.round(importFile.size / 1024)} KB · pronto para importar</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>{Math.round(importFile.size / 1024)} KB · {t("project.import_ready")}</div>
               </div>
             ) : (
               <>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
-                <div>Arraste seu .docx, .txt ou .pdf aqui</div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>ou clique para selecionar</div>
+                <div>{t("project.import_drop_label")}</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>{t("project.import_drop_sub")}</div>
               </>
             )}
             <input
@@ -720,11 +761,14 @@ export function ProjectPage() {
             />
           </label>
           <Input
-            label="Título do capítulo (opcional)"
-            placeholder="Deixe vazio para usar o nome do arquivo"
+            label={t("project.import_chapter_title_label")}
+            placeholder={t("project.import_chapter_title_placeholder")}
             value={importTitle}
             onChange={(e) => setImportTitle(e.target.value)}
           />
+          {importError && (
+            <ErrorCard message={importError} onDismiss={() => setImportError(null)} />
+          )}
         </form>
       </Modal>
     </Layout>

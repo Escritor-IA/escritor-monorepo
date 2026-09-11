@@ -5,9 +5,14 @@ import { authApi } from "@/api/auth";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { VerifyEmail } from "@/pages/VerifyEmail";
+import { SelectPlan } from "@/pages/SelectPlan";
+import { CheckoutProcessing } from "@/pages/CheckoutProcessing";
+import { CheckoutSuccess } from "@/pages/CheckoutSuccess";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { ChapterPage } from "@/pages/ChapterPage";
+import { NotFound } from "@/pages/NotFound";
+import { Terms } from "@/pages/Terms";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthStore();
@@ -35,6 +40,31 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route
+            path="/select-plan"
+            element={
+              <RequireAuth>
+                <SelectPlan />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkout/processing"
+            element={
+              <RequireAuth>
+                <CheckoutProcessing />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkout/success"
+            element={
+              <RequireAuth>
+                <CheckoutSuccess />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -60,7 +90,7 @@ export default function App() {
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

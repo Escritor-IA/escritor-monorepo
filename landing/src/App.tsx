@@ -1,8 +1,167 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Routes, Route, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
 import logo from "./assets/logo.png";
+import { getPlanPrices, type PlanCurrencyPrices } from "./api";
+import { CURRENCY_SYMBOL, formatPrice, type Currency } from "./utils/currency";
 
 const APP_URL = import.meta.env.VITE_APP_URL ?? "http://localhost:5173";
 
+/* ============ LANGUAGE SELECTOR ============ */
+const LANGS = [
+  { code: "pt-br", label: "Português" },
+  { code: "en",    label: "English" },
+  { code: "fr",    label: "Français" },
+  { code: "es",    label: "Español" },
+] as const;
+type LangCode = (typeof LANGS)[number]["code"];
+
+function FlagSVG({ code, size = 18 }: { code: LangCode; size?: number }) {
+  const h = Math.round(size * 0.7);
+  const style: React.CSSProperties = { display: "block", borderRadius: 2, flexShrink: 0 };
+  if (code === "pt-br") return (
+    <svg width={size} height={h} viewBox="0 0 20 14" style={style}>
+      <rect width="20" height="14" fill="#009B3A" />
+      <polygon points="10,1.4 18.8,7 10,12.6 1.2,7" fill="#FEDF00" />
+      <circle cx="10" cy="7" r="3.6" fill="#002776" />
+      <path d="M6.6 5.8 Q10 4.6 13.4 5.8" stroke="white" strokeWidth="0.7" fill="none" />
+    </svg>
+  );
+  if (code === "en") return (
+    <svg width={size} height={h} viewBox="0 0 20 14" style={style}>
+      <rect width="20" height="14" fill="#B22234" />
+      {([0, 2, 4, 6, 8, 10, 12] as number[]).map((y) => (
+        <rect key={y} width="20" height="1.08" y={y + 1.08} fill="white" />
+      ))}
+      <rect width="8.5" height="7.6" fill="#3C3B6E" />
+      {([1, 3, 5] as number[]).map((row) =>
+        ([1.2, 2.8, 4.4, 6.0] as number[]).map((col) => (
+          <circle key={`${row}-${col}`} cx={col} cy={row} r="0.38" fill="white" />
+        ))
+      )}
+      {([2, 4] as number[]).map((row) =>
+        ([2.0, 3.6, 5.2] as number[]).map((col) => (
+          <circle key={`${row}-${col}`} cx={col} cy={row} r="0.38" fill="white" />
+        ))
+      )}
+    </svg>
+  );
+  if (code === "fr") return (
+    <svg width={size} height={h} viewBox="0 0 20 14" style={style}>
+      <rect width="20" height="14" fill="#ED2939" />
+      <rect width="13.4" height="14" fill="white" />
+      <rect width="6.7" height="14" fill="#002395" />
+    </svg>
+  );
+  return (
+    <svg width={size} height={h} viewBox="0 0 20 14" style={style}>
+      <rect width="20" height="14" fill="#C60B1E" />
+      <rect width="20" height="7" y="3.5" fill="#FFC400" />
+    </svg>
+  );
+}
+
+function LandingLanguageSelector() {
+  const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const rawLang = i18n.language?.toLowerCase() ?? "pt-br";
+  const validCodes = LANGS.map((l) => l.code) as string[];
+  const current: LangCode = validCodes.includes(rawLang) ? (rawLang as LangCode) : "pt-br";
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const select = (code: LangCode) => {
+    i18n.changeLanguage(code);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          height: 32,
+          padding: "0 10px",
+          borderRadius: 999,
+          border: "1px solid rgba(0,0,0,0.12)",
+          background: open ? "rgba(0,0,0,0.05)" : "transparent",
+          color: "inherit",
+          fontSize: 12,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          transition: "background .15s",
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+        }}
+        onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = "rgba(0,0,0,0.05)"; }}
+        onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = "transparent"; }}
+        aria-label="Language"
+      >
+        <FlagSVG code={current} size={18} />
+        <span>{current === "pt-br" ? "PT" : current.toUpperCase()}</span>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+          style={{ transition: "transform .15s", transform: open ? "rotate(180deg)" : "none" }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", right: 0,
+          background: "#fff", border: "1px solid rgba(0,0,0,0.1)",
+          borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          overflow: "hidden", minWidth: 148, zIndex: 300,
+        }}>
+          {LANGS.map((l, i) => {
+            const active = l.code === current;
+            return (
+              <button
+                key={l.code}
+                onClick={() => select(l.code)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  width: "100%", padding: "9px 14px", fontSize: 13,
+                  color: active ? "#111" : "#444",
+                  background: active ? "rgba(0,0,0,0.04)" : "transparent",
+                  fontWeight: active ? 600 : 400,
+                  textAlign: "left", cursor: "pointer",
+                  borderBottom: i < LANGS.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  transition: "background .1s",
+                }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              >
+                <FlagSVG code={l.code} size={20} />
+                <span>{l.label}</span>
+                {active && (
+                  <svg style={{ marginLeft: "auto" }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2d7a22" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============ ARROW ============ */
 function Arrow() {
   return (
     <svg
@@ -26,6 +185,7 @@ function Arrow() {
 
 /* ============ NAV ============ */
 function Nav() {
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -49,17 +209,18 @@ function Nav() {
           </span>
         </a>
         <div className="nav-links">
-          <a href="#produto">O Editor</a>
-          <a href="#diferenciais">Diferenciais</a>
-          <a href="#planos">Planos</a>
-          <a href="#sobre">Sobre</a>
+          <a href="#produto">{t("nav.editor")}</a>
+          <a href="#diferenciais">{t("nav.features")}</a>
+          <a href="#planos">{t("nav.plans")}</a>
+          <a href="#sobre">{t("nav.about")}</a>
         </div>
         <div className="nav-cta">
+          <LandingLanguageSelector />
           <a href={`${APP_URL}/login`} className="btn btn-ghost btn-sm">
-            Entrar
+            {t("nav.login")}
           </a>
           <a href={`${APP_URL}/register`} className="btn btn-primary btn-sm">
-            Comece aqui <Arrow />
+            {t("nav.register")} <Arrow />
           </a>
         </div>
       </div>
@@ -69,6 +230,7 @@ function Nav() {
 
 /* ============ EDITOR MOCKUP ============ */
 function EditorMockup() {
+  const { t } = useTranslation();
   return (
     <div className="editor">
       <div className="editor-bar">
@@ -85,14 +247,14 @@ function EditorMockup() {
         <span className="genre-chip">Fantasia</span>
       </div>
       <div className="editor-toolbar">
-        <span className="tool active">Revisão</span>
-        <span className="tool">Reescrever</span>
-        <span className="tool">Leitores</span>
-        <span className="tool">Versões</span>
+        <span className="tool active">{t("mockup.revision")}</span>
+        <span className="tool">{t("mockup.rewrite")}</span>
+        <span className="tool">{t("mockup.readers")}</span>
+        <span className="tool">{t("mockup.versions")}</span>
         <span className="tool-sep" />
-        <span className="tool">Coerência</span>
-        <span className="tool">Voz autoral</span>
-        <span className="word-count">7.842 palavras · cap. 7 de 12</span>
+        <span className="tool">{t("mockup.coherence")}</span>
+        <span className="tool">{t("mockup.voice")}</span>
+        <span className="word-count">{t("mockup.word_count")}</span>
       </div>
       <div className="editor-body">
         <div className="gutter">
@@ -148,17 +310,17 @@ function EditorMockup() {
           </p>
         </div>
         <aside className="margin">
-          <div className="margin-title">Anotações · linha 7</div>
+          <div className="margin-title">{t("mockup.annotation_label")}</div>
           <div className="note">
             <div className="who">
-              <span>●</span> Coerência
+              <span>●</span> {t("mockup.coherence")}
             </div>
             A bolsa foi descrita como vazia no Capítulo 4. Você quer manter o
             fragmento aqui, ou ajustar lá?
           </div>
           <div className="note green">
             <div className="who">
-              <span>●</span> Voz autoral
+              <span>●</span> {t("mockup.voice")}
             </div>
             Sua escolha por{" "}
             <i>"como costumam chegar as decisões verdadeiras"</i> está coerente
@@ -173,7 +335,7 @@ function EditorMockup() {
             que mostrem o medo pelo corpo dela?
           </div>
           <div className="readers">
-            <div className="readers-title">Leitores simulados · cap. 7</div>
+            <div className="readers-title">{t("mockup.reader_label")}</div>
             <div className="reader">
               <div className="reader-avatar">M</div>
               <div className="reader-name">Marina · fantasia adulta</div>
@@ -226,37 +388,31 @@ function EditorMockup() {
 
 /* ============ HERO ============ */
 function Hero() {
+  const { t } = useTranslation();
   return (
     <header className="hero">
       <div className="wrap">
         <span className="eyebrow">
           <span className="pulse" />
-          Em beta
+          {t("hero.eyebrow")}
         </span>
         <h1 className="h1">
-          Um parceiro para quem <em>escreve.</em>
+          {t("hero.h1_before")}<em>{t("hero.h1_em")}</em>
         </h1>
-        <p className="h1-sub">
-          A primeira plataforma brasileira de apoio à escrita de ficção. Recebe
-          seu texto, devolve coerência narrativa, reações de leitores simulados
-          e sugestões — sempre sob seu pedido, sempre na sua voz. Nunca escreve
-          por você.
-        </p>
+        <p className="h1-sub">{t("hero.sub")}</p>
         <div className="hero-cta">
           <a href={`${APP_URL}/register`} className="btn btn-primary btn-lg">
-            Comece aqui <Arrow />
+            {t("hero.cta_primary")} <Arrow />
           </a>
           <a href="#planos" className="btn btn-ghost btn-lg">
-            Ver planos
+            {t("hero.cta_secondary")}
           </a>
-          <span className="hero-note">
-            grátis até 5.000 palavras · sem cartão
-          </span>
+          <span className="hero-note">{t("hero.note")}</span>
         </div>
       </div>
       <div className="wrap peek">
         <div className="peek-label">
-          <span>Imagem apenas ilustrativa</span>
+          <span>{t("hero.mockup_hint")}</span>
           <svg width="46" height="10" viewBox="0 0 46 10" fill="none">
             <path
               d="M0 5h36M30 1l6 4-6 4"
@@ -269,7 +425,7 @@ function Hero() {
         </div>
         <EditorMockup />
         <div className="scroll-cue">
-          <span>continue lendo</span>
+          <span>{t("hero.scroll_cue")}</span>
           <span className="line" />
         </div>
       </div>
@@ -279,6 +435,7 @@ function Hero() {
 
 /* ============ PRODUCT REVEAL ============ */
 function ProductReveal() {
+  const { t } = useTranslation();
   return (
     <section
       id="produto"
@@ -287,23 +444,14 @@ function ProductReveal() {
     >
       <div className="below-editor-row">
         <div>
-          <span className="reveal-eyebrow">— o editor, por dentro</span>
+          <span className="reveal-eyebrow">{t("product.eyebrow")}</span>
           <h2 className="reveal-title">
-            Anotações na margem. <em>Voz autoral</em> intacta.
+            {t("product.h2_before")}<em>{t("product.h2_em")}</em>{t("product.h2_after")}
           </h2>
         </div>
         <div className="reveal-body">
-          <p>
-            Você sobe um capítulo ou o manuscrito inteiro. O Escritor.AI lê o
-            texto à luz do gênero que você declara — fantasia, mistério,
-            infantojuvenil, romance — e devolve apontamentos pontuais na margem.
-            Coerência de personagem. Continuidade de cena. Ritmo. Voz.
-          </p>
-          <p>
-            Sugestões só aparecem quando você pede. A ferramenta nunca substitui
-            um parágrafo seu; quando muito, propõe três caminhos e deixa a
-            escolha com quem sempre teve a escolha: <i>você</i>.
-          </p>
+          <p>{t("product.p1")}</p>
+          <p>{t("product.p2")}</p>
         </div>
       </div>
     </section>
@@ -311,56 +459,33 @@ function ProductReveal() {
 }
 
 /* ============ DIFERENCIAIS ============ */
+interface FeatureItem {
+  n: string;
+  h_before: string;
+  h_em: string;
+  h_after: string;
+  body: string;
+  glyph: string;
+}
+
 function Diferenciais() {
-  const items = [
-    {
-      n: "01",
-      h: (
-        <>
-          Calibrado por <em>gênero</em>, não por nicho de marketing.
-        </>
-      ),
-      body: "Fantasia tem regras diferentes de romance, que tem regras diferentes de infantojuvenil. O Escritor.AI muda a lente conforme o gênero declarado da sua obra — não conforme um template de SEO.",
-      glyph: "fantasia · mistério · infantojuvenil · romance",
-    },
-    {
-      n: "02",
-      h: (
-        <>
-          Leitores <em>simulados</em>. Reação antes da publicação.
-        </>
-      ),
-      body: "Escolha de 3 a 6 perfis de leitor — estreante, leitor de gênero, leitura crítica. Veja onde cada um se prende, onde se solta, e em que cena fecha o livro pela primeira vez.",
-      glyph: "3 a 6 perfis · feedback por cena",
-    },
-    {
-      n: "03",
-      h: (
-        <>
-          Sua voz, no centro. <em>Sempre</em>.
-        </>
-      ),
-      body: "Nada de gerar o próximo parágrafo por você. Nada de uniformizar seu estilo. O Escritor.AI aprende sua voz autoral pelos capítulos que você já escreveu, e usa isso como referência das próprias sugestões.",
-      glyph: "co-autor não. parceiro sim.",
-    },
-  ];
+  const { t } = useTranslation();
+  const items = t("features.items", { returnObjects: true }) as FeatureItem[];
 
   return (
     <section id="diferenciais" className="wrap section">
-      <span className="section-eyebrow">Diferenciais</span>
+      <span className="section-eyebrow">{t("features.eyebrow")}</span>
       <h2 className="section-h">
-        Onde as outras ferramentas <em>falham</em>, a sua começa.
+        {t("features.h2_before")}<em>{t("features.h2_em")}</em>{t("features.h2_after")}
       </h2>
-      <p className="section-lead">
-        Jasper, QuillBot, Clarice.ai — todas excelentes para copy de marketing.
-        Nenhuma feita para ficção literária brasileira. O Escritor.AI é a
-        primeira.
-      </p>
+      <p className="section-lead">{t("features.lead")}</p>
       <div className="features">
         {items.map((it) => (
           <div className="feature" key={it.n}>
             <div className="feature-num">{it.n}</div>
-            <h3 className="feature-h">{it.h}</h3>
+            <h3 className="feature-h">
+              {it.h_before}<em>{it.h_em}</em>{it.h_after}
+            </h3>
             <p className="feature-body">{it.body}</p>
             <div className="feature-glyph">{it.glyph}</div>
           </div>
@@ -371,113 +496,84 @@ function Diferenciais() {
 }
 
 /* ============ PLANS ============ */
-interface PlanFeat {
-  t: string;
-  ok: boolean;
-}
-interface PlanData {
+interface PlanTranslation {
   name: string;
   desc: string;
-  price: string;
   per: string;
   meta: string;
   cta: string;
-  feats: PlanFeat[];
-  featured: boolean;
+  feats: string[];
 }
 
+const PLAN_KEYS = ["free", "author", "complete"] as const;
+// Maps the landing's plan keys to the backend's plan keys used by /payments/plan-prices/.
+const PLAN_API_KEY: Record<string, "basic" | "premium" | null> = {
+  free: null,
+  author: "basic",
+  complete: "premium",
+};
+const PLAN_FEATURED = { free: false, author: true, complete: false };
+const PLAN_FEAT_OK: Record<string, boolean[]> = {
+  free:     [true, true, true, true, false, false],
+  author:   [true, true, true, true, true, true],
+  complete: [true, true, true, true, true],
+};
+
 function Plans() {
-  const plans: PlanData[] = [
-    {
-      name: "Rascunho",
-      desc: "Para começar a tatear o caminho.",
-      price: "0",
-      per: "/sempre",
-      meta: "Sem cartão · sem prazo",
-      cta: "Criar conta",
-      feats: [
-        { t: "Até 5.000 palavras por capítulo", ok: true },
-        { t: "10 créditos iniciais mensais", ok: true },
-        { t: "Coerência narrativa básica", ok: true },
-        { t: "1 leitor simulado por mês", ok: true },
-        { t: "Análise Total do Manuscrito", ok: false },
-        { t: "Sugestões pontuais sob demanda", ok: false },
-      ],
-      featured: false,
-    },
-    {
-      name: "Autor",
-      desc: "Para quem está escrevendo a obra.",
-      price: "29",
-      per: "/mês",
-      meta: "Cobrança anual: R$ 24/mês",
-      cta: "Começar 14 dias grátis",
-      feats: [
-        { t: "Até 15.000 palavras por capítulo", ok: true },
-        { t: "60 créditos iniciais mensais", ok: true },
-        { t: "Anotações calibradas por gênero", ok: true },
-        { t: "3 perfis de leitor simulados", ok: true },
-        { t: "Sugestões sob demanda", ok: true },
-        { t: "Histórico de versões", ok: true },
-      ],
-      featured: true,
-    },
-    {
-      name: "Obra Completa",
-      desc: "Para quem está fechando o livro.",
-      price: "59",
-      per: "/mês",
-      meta: "Cobrança anual: R$ 49/mês",
-      cta: "Falar com a gente",
-      feats: [
-        { t: "Tudo do plano Autor", ok: true },
-        { t: "Texto Ilimitado por capítulo", ok: true },
-        { t: "150 créditos iniciais mensais", ok: true },
-        { t: "Leitura crítica em capítulos longos", ok: true },
-        { t: "6 perfis de leitor simulados", ok: true },
-      ],
-      featured: false,
-    },
-  ];
+  const { t } = useTranslation();
+  const [prices, setPrices] = useState<Record<"basic" | "premium", PlanCurrencyPrices> | null>(null);
+  const [currency, setCurrency] = useState<Currency>("brl");
+
+  useEffect(() => {
+    getPlanPrices()
+      .then((data) => {
+        setPrices(data.prices);
+        setCurrency(data.detected_currency);
+      })
+      .catch((err) => console.error("Failed to load plan prices:", err));
+  }, []);
 
   return (
     <section id="planos" className="wrap section">
-      <span className="section-eyebrow">Planos</span>
+      <span className="section-eyebrow">{t("plans.eyebrow")}</span>
       <h2 className="section-h">
-        Pague <em>menos</em> que um café por capítulo revisado.
+        {t("plans.h2_before")}<em>{t("plans.h2_em")}</em>{t("plans.h2_after")}
       </h2>
-      <p className="section-lead">
-        Revisar profissionalmente um romance de 80 mil palavras custa entre
-        R$2.400 e R$6.400. Aqui, você acompanha o processo inteiro pelo preço de
-        uma assinatura.
-      </p>
+      <p className="section-lead">{t("plans.lead")}</p>
       <div className="pricing">
-        {plans.map((p) => (
-          <div key={p.name} className={`plan${p.featured ? " featured" : ""}`}>
-            {p.featured && <span className="featured-tag">Mais escolhido</span>}
-            <div className="plan-name">{p.name}</div>
-            <div className="plan-desc">{p.desc}</div>
-            <div className="price">
-              <span className="currency">R$</span>
-              <span className="amount">{p.price}</span>
-              <span className="per">{p.per}</span>
+        {PLAN_KEYS.map((key) => {
+          const p = t(`plans.${key}`, { returnObjects: true }) as PlanTranslation;
+          const featured = PLAN_FEATURED[key];
+          const okFlags = PLAN_FEAT_OK[key];
+          const apiKey = PLAN_API_KEY[key];
+          const amount = apiKey && prices ? formatPrice(prices[apiKey][currency], currency) : "0";
+          return (
+            <div key={key} className={`plan${featured ? " featured" : ""}`}>
+              {featured && <span className="featured-tag">{t("plans.most_chosen")}</span>}
+              <div className="plan-name">{p.name}</div>
+              <div className="plan-desc">{p.desc}</div>
+              <div className="price">
+                <span className="currency">{CURRENCY_SYMBOL[currency]}</span>
+                <span className="amount">{amount}</span>
+                <span className="per">{p.per}</span>
+              </div>
+              <div className="plan-meta">{p.meta}</div>
+              <ul className="plan-feat">
+                {p.feats.map((feat, i) => (
+                  <li key={i} className={okFlags[i] ? "" : "off"}>
+                    {feat}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={`${APP_URL}/register`}
+                className={`btn ${featured ? "btn-primary" : "btn-ghost"}`}
+              >
+                {p.cta} <Arrow />
+              </a>
             </div>
-            <div className="plan-meta">{p.meta}</div>
-            <ul className="plan-feat">
-              {p.feats.map((f, i) => (
-                <li key={i} className={f.ok ? "" : "off"}>
-                  {f.t}
-                </li>
-              ))}
-            </ul>
-            <a
-              href={`${APP_URL}/register`}
-              className={`btn ${p.featured ? "btn-primary" : "btn-ghost"}`}
-            >
-              {p.cta} <Arrow />
-            </a>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -485,29 +581,26 @@ function Plans() {
 
 /* ============ FINAL CTA ============ */
 function FinalCTA() {
+  const { t } = useTranslation();
   return (
     <section id="sobre" className="wrap" style={{ paddingTop: 40 }}>
       <div className="final-cta">
         <h2 className="h">
-          O próximo capítulo é seu. A <em>ferramenta</em> é nossa.
+          {t("final_cta.h_before")}<em>{t("final_cta.h_em")}</em>{t("final_cta.h_after")}
         </h2>
-        <p className="sub">
-          Comece com o plano gratuito agora. Suba um trecho do seu livro,
-          escolha o gênero e veja a margem se preencher de anotações em
-          segundos.
-        </p>
+        <p className="sub">{t("final_cta.sub")}</p>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           <a href={`${APP_URL}/register`} className="btn btn-primary btn-lg">
-            Comece aqui <Arrow />
+            {t("final_cta.cta_primary")} <Arrow />
           </a>
           <a href="#planos" className="btn btn-ghost btn-lg">
-            Ver os planos
+            {t("final_cta.cta_secondary")}
           </a>
         </div>
         <div className="signoff">
-          "Nunca escreve por você.
+          {t("final_cta.signoff_line1")}
           <br />
-          Sempre a serviço de quem cria."
+          {t("final_cta.signoff_line2")}
         </div>
       </div>
     </section>
@@ -516,6 +609,7 @@ function FinalCTA() {
 
 /* ============ FOOTER ============ */
 function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="foot">
       <div className="wrap">
@@ -535,78 +629,47 @@ function Footer() {
                 Escritor<span className="brand-dot">.</span>ia
               </span>
             </a>
-            <p className="foot-tag">
-              A primeira plataforma brasileira de apoio à escrita de ficção.
-              Para escritores independentes que querem escrever com qualidade,
-              não apenas com velocidade.
-            </p>
+            <p className="foot-tag">{t("footer.tagline")}</p>
           </div>
           <div className="foot-col">
-            <h4>Produto</h4>
+            <h4>{t("footer.col_product")}</h4>
             <ul>
-              <li>
-                <a href="#produto">O editor</a>
-              </li>
-              <li>
-                <a href="#diferenciais">Diferenciais</a>
-              </li>
-              <li>
-                <a href="#planos">Planos</a>
-              </li>
-              <li>
-                <a href="#">Gêneros suportados</a>
-              </li>
+              <li><a href="#produto">{t("footer.link_editor")}</a></li>
+              <li><a href="#diferenciais">{t("footer.link_features")}</a></li>
+              <li><a href="#planos">{t("footer.link_plans")}</a></li>
+              <li><a href="#">{t("footer.link_genres")}</a></li>
             </ul>
           </div>
           <div className="foot-col">
-            <h4>Empresa</h4>
+            <h4>{t("footer.col_company")}</h4>
             <ul>
-              <li>
-                <a href="#">Sobre nós</a>
-              </li>
-              <li>
-                <a href="#">Manifesto</a>
-              </li>
-              <li>
-                <a href="#">Contato</a>
-              </li>
-              <li>
-                <a href="#">Carreiras</a>
-              </li>
+              <li><a href="#">{t("footer.link_about")}</a></li>
+              <li><a href="#">{t("footer.link_manifesto")}</a></li>
+              <li><a href="#">{t("footer.link_contact")}</a></li>
+              <li><a href="#">{t("footer.link_careers")}</a></li>
             </ul>
           </div>
           <div className="foot-col">
-            <h4>Comunidade</h4>
+            <h4>{t("footer.col_community")}</h4>
             <ul>
-              <li>
-                <a href="#">Blog do escritor</a>
-              </li>
-              <li>
-                <a href="#">Boletim mensal</a>
-              </li>
-              <li>
-                <a href="#">Discord</a>
-              </li>
-              <li>
-                <a href="#">Termos e privacidade</a>
-              </li>
+              <li><a href="#">{t("footer.link_blog")}</a></li>
+              <li><a href="#">{t("footer.link_newsletter")}</a></li>
+              <li><a href="#">{t("footer.link_discord")}</a></li>
+              <li><Link to="/termos">{t("footer.link_terms")}</Link></li>
             </ul>
           </div>
         </div>
         <div className="foot-bottom">
-          <span>
-            © 2026 Escritor.AI — Souza · Grigolin · Lopes Filho · Thomazete ·
-            Carbelotti
-          </span>
-          <span>feito no Brasil ✦</span>
+          <span>{t("footer.copyright")}</span>
+          <span>{t("footer.made_in")}</span>
         </div>
       </div>
     </footer>
   );
 }
 
-/* ============ APP ============ */
-export default function App() {
+/* ============ LANDING ============ */
+function Landing() {
   return (
     <>
       <Nav />
@@ -617,5 +680,16 @@ export default function App() {
       <FinalCTA />
       <Footer />
     </>
+  );
+}
+
+/* ============ APP ============ */
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/termos" element={<Terms />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }

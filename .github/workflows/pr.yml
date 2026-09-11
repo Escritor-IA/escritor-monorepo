@@ -1,0 +1,9 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml

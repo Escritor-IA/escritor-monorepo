@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User
@@ -10,6 +11,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     VerifyEmailSerializer,
     ResendOtpSerializer,
+    GoogleAuthSerializer,
 )
 
 
@@ -36,8 +38,37 @@ class VerifyEmailView(APIView):
     def post(self, request):
         serializer = VerifyEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "Email verificado com sucesso!"}, status=status.HTTP_200_OK)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "detail": "Email verificado com sucesso!",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+        }, status=status.HTTP_200_OK)
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if serializer.link_required:
+            return Response(
+                {"link_required": True, "email": serializer.pending_email},
+                status=status.HTTP_200_OK,
+            )
+
+        user = serializer.validated_data["user"]
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+            "is_new_user": serializer.is_new_user,
+        }, status=status.HTTP_200_OK)
 
 
 class ResendOtpView(APIView):
@@ -52,5 +83,15 @@ class ResendOtpView(APIView):
 
 class DeleteAccountView(APIView):
     def delete(self, request):
+        try:
+            subscription_id = request.user.user_plan.stripe_subscription_id
+            if subscription_id:
+                import stripe
+                from django.conf import settings
+                stripe.api_key = settings.STRIPE_SECRET_KEY
+                stripe.Subscription.delete(subscription_id)
+        except Exception:
+            pass  # Never block account deletion because of a Stripe error
+
         request.user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

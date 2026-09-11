@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { ErrorCard } from "./ErrorCard";
 
 interface Props {
   title: string;
@@ -7,6 +8,7 @@ interface Props {
   cancelLabel?: string;
   danger?: boolean;
   loading?: boolean;
+  error?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,6 +20,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancelar",
   danger = false,
   loading = false,
+  error,
   onConfirm,
   onCancel,
 }: Props) {
@@ -33,6 +36,7 @@ export function ConfirmDialog({
           <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.55 }}>
             {description}
           </p>
+          {error && <ErrorCard message={error} style={{ marginTop: 14 }} />}
         </div>
         <div className="modal-foot">
           <button className="btn btn-secondary btn-sm" onClick={onCancel} disabled={loading}>

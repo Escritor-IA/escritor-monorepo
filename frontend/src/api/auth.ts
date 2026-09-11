@@ -9,7 +9,6 @@ export const authApi = {
     email: string;
     password: string;
     password_confirm: string;
-    plan: "free" | "basic" | "premium";
   }) => client.post<User>("/auth/register/", data),
 
   login: (data: { username: string; password: string }) =>
@@ -18,10 +17,19 @@ export const authApi = {
   me: () => client.get<User>("/auth/me/"),
 
   verifyEmail: (data: { email: string; otp_code: string }) =>
-    client.post<{ detail: string }>("/auth/verify-email/", data),
+    client.post<{ detail: string; access: string; refresh: string; user: User }>("/auth/verify-email/", data),
 
   resendOtp: (data: { email: string }) =>
     client.post<{ detail: string }>("/auth/resend-otp/", data),
 
+  googleAuth: (data: { credential: string; confirm_link?: boolean }) =>
+    client.post<
+      | { access: string; refresh: string; user: User; is_new_user: boolean }
+      | { link_required: true; email: string }
+    >("/auth/google/", data),
+
   deleteAccount: () => client.delete("/auth/me/delete/"),
+
+  updateLanguage: (preferred_language: string) =>
+    client.patch<{ preferred_language: string }>("/auth/me/", { preferred_language }),
 };
