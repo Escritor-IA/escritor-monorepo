@@ -1,0 +1,18 @@
+name: Staging Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  deploy:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy (placeholder)
+        run: |
+          echo "TODO: ainda não há ambiente de staging publicado."
+          echo "Este step existe só pra fechar o gate: testes passaram -> aqui entra o deploy real."

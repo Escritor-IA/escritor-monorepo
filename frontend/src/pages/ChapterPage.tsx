@@ -10,6 +10,8 @@ import { Button } from "@/components/UI/Button";
 import { exportChapterDocx, exportChapterPdf } from "@/utils/export";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { ResourceNotFound } from "@/components/UI/ResourceNotFound";
+import { ErrorCard } from "@/components/UI/ErrorCard";
+import { getErrorMessage } from "@/utils/errors";
 
 const AUTOSAVE_DELAY = 2000;
 
@@ -27,6 +29,7 @@ export function ChapterPage() {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(true);
   const [showOutline, setShowOutline] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
@@ -54,14 +57,17 @@ export function ChapterPage() {
 
   const save = useCallback(async (latestContent: string, latestTitle: string) => {
     setSaving(true);
+    setSaveError(null);
     try {
       const { data } = await chaptersApi.update(chapterId, { content: latestContent, title: latestTitle });
       setChapter(data);
       setSavedAt(new Date());
+    } catch (err) {
+      setSaveError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setSaving(false);
     }
-  }, [chapterId]);
+  }, [chapterId, t]);
 
   const scheduleAutosave = (c: string, tl: string) => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -313,6 +319,11 @@ export function ChapterPage() {
             {showAnalysis ? t("chapter.hide_analysis") : t("chapter.show_analysis")}
           </Button>
         </div>
+        {saveError && (
+          <div style={{ padding: "0 22px 12px" }}>
+            <ErrorCard message={saveError} onDismiss={() => setSaveError(null)} />
+          </div>
+        )}
       </div>
 
       {/* Body */}

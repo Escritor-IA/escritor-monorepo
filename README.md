@@ -59,7 +59,7 @@ GROQ_API_KEY_1=gsk_...
 GROQ_API_KEY_2=gsk_...   # opcional
 
 # Modelo padrão (pode omitir para usar o padrão)
-GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+GROQ_MODEL=openai/gpt-oss-120b
 ```
 
 ### 3. Banco de dados

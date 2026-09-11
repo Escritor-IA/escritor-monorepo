@@ -1,3 +1,6 @@
+import logging
+
+from groq import APIError
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +11,8 @@ from apps.ai_services.analysis_service import run_analysis
 
 from .models import Analysis
 from .serializers import AnalysisSerializer, RequestAnalysisSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisListView(generics.ListAPIView):
@@ -67,6 +72,15 @@ class RunAnalysisView(APIView):
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except RuntimeError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except APIError as exc:
+            # Groq errors (invalid/decommissioned model, malformed request, etc.) must
+            # never surface their raw message or a Django debug traceback to the client —
+            # that would leak manuscript content and internal state via local vars.
+            logger.error("Groq API error during analysis run: %s", exc)
+            return Response(
+                {"detail": "Não foi possível gerar a análise no momento. Tente novamente em instantes."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         return Response(
             {

@@ -16,15 +16,6 @@ PLAN_CREDITS = {"free": 10, "basic": 60, "premium": 150}
 # Generic short text — safe for every plan's word limit
 CONTENT_SHORT = "palavra " * 100
 
-# ── Register ───────────────────────────────────────────────────────────────────
-
-REGISTER_PLAN_CASES = [
-    # (plan, expected_initial_credits)
-    ("free",    10),
-    ("basic",   60),
-    ("premium", 150),
-]
-
 # ── Chapter word limits ────────────────────────────────────────────────────────
 # free → 5 000 words | basic → 15 000 words | premium → unlimited
 

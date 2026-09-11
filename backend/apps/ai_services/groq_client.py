@@ -14,7 +14,7 @@ from .key_manager import get_active_key, rotate_key
 
 logger = logging.getLogger(__name__)
 
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 _MAX_RETRIES = 3
 
 

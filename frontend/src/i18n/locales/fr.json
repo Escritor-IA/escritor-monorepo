@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer plus tard."
+  },
   "nav": {
     "credits": "crédits",
     "plan": "Abonnement",

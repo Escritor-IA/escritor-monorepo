@@ -8,6 +8,8 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/UI/Button";
 import { Modal } from "@/components/UI/Modal";
 import { UpgradeModal } from "@/components/UI/UpgradeModal";
+import { ErrorCard } from "@/components/UI/ErrorCard";
+import { getErrorMessage } from "@/utils/errors";
 
 interface AnalysisPanelProps {
   projectId: string;
@@ -156,8 +158,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
       updateCredits(data.credits_remaining);
       onCreditsUpdate?.(data.credits_remaining);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || t("analysis.run_locked");
-      setError(msg);
+      setError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setLoading(false);
     }
@@ -425,11 +426,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
       </Button>
 
       {/* Error */}
-      {error && (
-        <div style={{ padding: "10px 12px", background: "var(--red-wash)", borderRadius: 8, fontSize: 13, color: "var(--red)" }}>
-          {error}
-        </div>
-      )}
+      {error && <ErrorCard message={error} onDismiss={() => setError(null)} />}
 
       {/* Placeholder */}
       {!result && !loading && (

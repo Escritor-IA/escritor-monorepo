@@ -421,3 +421,61 @@ def test_run_analysis_with_unknown_project_returns_404(auth_client, user_free):
 def test_run_analysis_missing_required_fields_returns_400(auth_client, user_free):
     resp = auth_client(user_free).post("/api/analyses/run/", {}, format="json")
     assert resp.status_code == 400
+
+
+# ── Run — Groq failures ─────────────────────────────────────────────────────────
+
+def test_run_analysis_returns_503_when_all_groq_keys_exhausted(
+    auth_client, user_free, make_project, make_chapter, monkeypatch,
+):
+    def raise_runtime_error(messages, model=None, max_tokens=None):
+        raise RuntimeError("Todas as chaves Groq foram esgotadas após 3 tentativas.")
+
+    monkeypatch.setattr(
+        "apps.ai_services.analysis_service.chat_completion", raise_runtime_error
+    )
+
+    project = make_project(user_free)
+    chapter = make_chapter(project, number=1, content="palavra " * 50)
+
+    resp = auth_client(user_free).post("/api/analyses/run/", {
+        "project_id":    str(project.pk),
+        "chapter_id":    str(chapter.pk),
+        "analysis_type": "local",
+        "selected_text": "trecho",
+    }, format="json")
+
+    assert resp.status_code == 503
+    assert "esgotadas" in resp.data["detail"]
+
+
+def test_run_analysis_returns_502_and_hides_raw_groq_error_on_api_error(
+    auth_client, user_free, make_project, make_chapter, monkeypatch,
+):
+    """A Groq APIError (e.g. invalid/decommissioned model) must never leak its raw
+    message or internal state to the client — only a generic detail."""
+    import httpx
+    from groq import APIError
+
+    secret_detail = "model `decommissioned-model-xyz` has been decommissioned"
+
+    def raise_api_error(messages, model=None, max_tokens=None):
+        request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+        raise APIError(secret_detail, request=request, body=None)
+
+    monkeypatch.setattr(
+        "apps.ai_services.analysis_service.chat_completion", raise_api_error
+    )
+
+    project = make_project(user_free)
+    chapter = make_chapter(project, number=1, content="palavra " * 50)
+
+    resp = auth_client(user_free).post("/api/analyses/run/", {
+        "project_id":    str(project.pk),
+        "chapter_id":    str(chapter.pk),
+        "analysis_type": "local",
+        "selected_text": "trecho",
+    }, format="json")
+
+    assert resp.status_code == 502
+    assert secret_detail not in resp.data["detail"]

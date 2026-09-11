@@ -12,6 +12,8 @@ import { Input } from "@/components/UI/Input";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Modal } from "@/components/UI/Modal";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
+import { ErrorCard } from "@/components/UI/ErrorCard";
+import { getErrorMessage } from "@/utils/errors";
 import { countWords, exportBookDocx, exportBookPdf } from "@/utils/export";
 import {
   DndContext,
@@ -288,14 +290,19 @@ export function ProjectPage() {
   const [newChapterOpen, setNewChapterOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [creatingChapter, setCreatingChapter] = useState(false);
+  const [createChapterError, setCreateChapterError] = useState<string | null>(null);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importTitle, setImportTitle] = useState("");
   const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const [deleteChapterTarget, setDeleteChapterTarget] = useState<Chapter | null>(null);
   const [deletingChapter, setDeletingChapter] = useState(false);
+  const [deleteChapterError, setDeleteChapterError] = useState<string | null>(null);
+
+  const [pageError, setPageError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -327,8 +334,12 @@ export function ProjectPage() {
   const handleSaveProjectTitle = async () => {
     setEditingProjectTitle(false);
     if (!project || !projectTitleDraft.trim() || projectTitleDraft.trim() === project.title) return;
-    const { data } = await projectsApi.update(projectId, { title: projectTitleDraft.trim() });
-    setProject(data);
+    try {
+      const { data } = await projectsApi.update(projectId, { title: projectTitleDraft.trim() });
+      setProject(data);
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
   const handleStartEditSynopsis = () => {
@@ -340,8 +351,12 @@ export function ProjectPage() {
   const handleSaveSynopsis = async () => {
     setEditingSynopsis(false);
     if (!project || synopsisDraft === (project.synopsis ?? "")) return;
-    const { data } = await projectsApi.update(projectId, { synopsis: synopsisDraft });
-    setProject(data);
+    try {
+      const { data } = await projectsApi.update(projectId, { synopsis: synopsisDraft });
+      setProject(data);
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
   const handleStartEditChapterTitle = (chapter: Chapter) => {
@@ -352,13 +367,18 @@ export function ProjectPage() {
   const handleSaveChapterTitle = async (chapter: Chapter) => {
     setEditingChapterId(null);
     if (chapterTitleDraft === chapter.title) return;
-    const { data } = await chaptersApi.update(chapter.id, { title: chapterTitleDraft });
-    setChapters((prev) => prev.map((c) => (c.id === chapter.id ? data : c)));
+    try {
+      const { data } = await chaptersApi.update(chapter.id, { title: chapterTitleDraft });
+      setChapters((prev) => prev.map((c) => (c.id === chapter.id ? data : c)));
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
   const handleCreateChapter = async (e: FormEvent) => {
     e.preventDefault();
     setCreatingChapter(true);
+    setCreateChapterError(null);
     try {
       const { data } = await chaptersApi.create(projectId, {
         number: chapters.length + 1,
@@ -369,6 +389,8 @@ export function ProjectPage() {
       setNewChapterOpen(false);
       setNewTitle("");
       navigate(`/chapters/${data.id}`);
+    } catch (err) {
+      setCreateChapterError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setCreatingChapter(false);
     }
@@ -378,12 +400,15 @@ export function ProjectPage() {
     e.preventDefault();
     if (!importFile) return;
     setImporting(true);
+    setImportError(null);
     try {
       const { data } = await chaptersApi.import(projectId, importFile, importTitle);
       setChapters((prev) => [...prev, data]);
       setImportOpen(false);
       setImportFile(null);
       setImportTitle("");
+    } catch (err) {
+      setImportError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setImporting(false);
     }
@@ -392,6 +417,7 @@ export function ProjectPage() {
   const handleConfirmDeleteChapter = async () => {
     if (!deleteChapterTarget) return;
     setDeletingChapter(true);
+    setDeleteChapterError(null);
     try {
       await chaptersApi.delete(deleteChapterTarget.id);
       const remaining = chapters
@@ -402,6 +428,8 @@ export function ProjectPage() {
       if (remaining.length > 0) {
         await Promise.all(remaining.map((c) => chaptersApi.update(c.id, { number: c.number })));
       }
+    } catch (err) {
+      setDeleteChapterError(getErrorMessage(err, t("errors.generic")));
     } finally {
       setDeletingChapter(false);
     }
@@ -416,7 +444,11 @@ export function ProjectPage() {
     const reordered = arrayMove(chapters, oldIdx, newIdx).map((c, i) => ({ ...c, number: i + 1 }));
 
     setChapters(reordered);
-    await Promise.all(reordered.map((c) => chaptersApi.update(c.id, { number: c.number })));
+    try {
+      await Promise.all(reordered.map((c) => chaptersApi.update(c.id, { number: c.number })));
+    } catch (err) {
+      setPageError(getErrorMessage(err, t("errors.generic")));
+    }
   };
 
   const formatGenres = (genres: string[]) => {
@@ -459,6 +491,10 @@ export function ProjectPage() {
       >
         <BackIcon /> {t("project.back")}
       </button>
+
+      {pageError && (
+        <ErrorCard message={pageError} onDismiss={() => setPageError(null)} style={{ marginTop: 12 }} />
+      )}
 
       {/* Project header */}
       <div style={{
@@ -573,10 +609,10 @@ export function ProjectPage() {
               onDoc={() => exportBookPdf(project, chapters)}
             />
           )}
-          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+          <Button variant="secondary" onClick={() => { setImportError(null); setImportOpen(true); }}>
             <UploadIcon /> {t("project.import_file")}
           </Button>
-          <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
+          <Button variant="primary" onClick={() => { setCreateChapterError(null); setNewChapterOpen(true); }}>
             <PlusIcon /> {t("project.new_chapter")}
           </Button>
         </div>
@@ -594,10 +630,10 @@ export function ProjectPage() {
                 {t("project.blank_sub")}
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-                <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                <Button variant="secondary" onClick={() => { setImportError(null); setImportOpen(true); }}>
                   <UploadIcon /> {t("project.import_btn")}
                 </Button>
-                <Button variant="primary" onClick={() => setNewChapterOpen(true)}>
+                <Button variant="primary" onClick={() => { setCreateChapterError(null); setNewChapterOpen(true); }}>
                   <PlusIcon /> {t("project.create_chapter_btn")}
                 </Button>
               </div>
@@ -646,7 +682,7 @@ export function ProjectPage() {
           </>
         }
       >
-        <form onSubmit={handleCreateChapter}>
+        <form onSubmit={handleCreateChapter} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Input
             label={t("project.chapter_title_label")}
             placeholder={t("project.chapter_title_placeholder")}
@@ -654,6 +690,9 @@ export function ProjectPage() {
             onChange={(e) => setNewTitle(e.target.value)}
             autoFocus
           />
+          {createChapterError && (
+            <ErrorCard message={createChapterError} onDismiss={() => setCreateChapterError(null)} />
+          )}
         </form>
       </Modal>
 
@@ -667,8 +706,9 @@ export function ProjectPage() {
           confirmLabel={t("project.delete_chapter_confirm")}
           danger
           loading={deletingChapter}
+          error={deleteChapterError}
           onConfirm={handleConfirmDeleteChapter}
-          onCancel={() => setDeleteChapterTarget(null)}
+          onCancel={() => { setDeleteChapterError(null); setDeleteChapterTarget(null); }}
         />
       )}
 
@@ -726,6 +766,9 @@ export function ProjectPage() {
             value={importTitle}
             onChange={(e) => setImportTitle(e.target.value)}
           />
+          {importError && (
+            <ErrorCard message={importError} onDismiss={() => setImportError(null)} />
+          )}
         </form>
       </Modal>
     </Layout>

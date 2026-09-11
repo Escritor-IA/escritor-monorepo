@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "generic": "Algo deu errado. Tente novamente mais tarde."
+  },
   "nav": {
     "credits": "créditos",
     "plan": "Plano",

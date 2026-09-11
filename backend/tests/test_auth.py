@@ -18,20 +18,41 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import User
-from tests.fixtures import ALL_PLANS, PLAN_CREDITS, REGISTER_PLAN_CASES, google_payload
+from tests.fixtures import ALL_PLANS, PLAN_CREDITS, google_payload
 
 pytestmark = pytest.mark.django_db
 
 
 # ── Register ───────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("plan,expected_credits", REGISTER_PLAN_CASES)
-def test_register_creates_user_with_correct_plan_and_credits(anon_client, plan, expected_credits):
+def test_register_always_creates_user_on_free_plan(anon_client):
+    """Paid plans are only granted via Stripe Checkout (apps/payments), never at
+    registration — there is no `plan` field on RegisterSerializer."""
+    payload = {
+        "username":         "newuser_free",
+        "email":            "newuser_free@test.com",
+        "first_name":       "Test",
+        "last_name":        "User",
+        "password":         "StrongPass123!",
+        "password_confirm": "StrongPass123!",
+    }
+
+    resp = anon_client.post("/api/auth/register/", payload)
+
+    assert resp.status_code == 201
+    user = User.objects.get(username="newuser_free")
+    assert user.user_plan.plan == "free"
+    assert user.user_plan.credits == PLAN_CREDITS["free"]
+    assert not user.is_email_verified
+
+
+@pytest.mark.parametrize("plan", ["basic", "premium"])
+def test_register_ignores_a_plan_field_in_the_payload(anon_client, plan):
+    """A client cannot self-grant a paid plan by sending `plan` at registration —
+    the serializer has no such field, so it must be silently ignored, not honored."""
     payload = {
         "username":         f"newuser_{plan}",
         "email":            f"newuser_{plan}@test.com",
-        "first_name":       "Test",
-        "last_name":        "User",
         "password":         "StrongPass123!",
         "password_confirm": "StrongPass123!",
         "plan":             plan,
@@ -41,9 +62,8 @@ def test_register_creates_user_with_correct_plan_and_credits(anon_client, plan, 
 
     assert resp.status_code == 201
     user = User.objects.get(username=f"newuser_{plan}")
-    assert user.user_plan.plan == plan
-    assert user.user_plan.credits == expected_credits
-    assert not user.is_email_verified
+    assert user.user_plan.plan == "free"
+    assert user.user_plan.credits == PLAN_CREDITS["free"]
 
 
 def test_register_password_mismatch_returns_400(anon_client):
