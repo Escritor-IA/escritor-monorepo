@@ -11,6 +11,7 @@ export function Avatar({ user, size }: Props) {
       <img
         src={user.avatar_url}
         alt=""
+        referrerPolicy="no-referrer"
         style={{
           width: size,
           height: size,

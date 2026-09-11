@@ -66,7 +66,7 @@ export function VerifyEmail() {
       localStorage.setItem("refresh_token", data.refresh);
       setUser(data.user);
       setSuccess(t("auth.verify_email.verified"));
-      setTimeout(() => navigate("/select-plan"), 1500);
+      setTimeout(() => navigate("/select-plan?onboarding=true"), 1500);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       if (data) {

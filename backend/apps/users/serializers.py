@@ -191,7 +191,11 @@ class GoogleAuthSerializer(serializers.Serializer):
 
         user = User.objects.filter(google_id=google_id).first()
 
-        if user is None:
+        if user is not None:
+            if avatar_url and user.avatar_url != avatar_url:
+                user.avatar_url = avatar_url
+                user.save(update_fields=["avatar_url"])
+        else:
             existing = User.objects.filter(email__iexact=email).first()
 
             if existing is not None:

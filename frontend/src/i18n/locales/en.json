@@ -70,7 +70,7 @@
       "back": "Back",
       "creating": "Creating account…",
       "create": "Create my account",
-      "create_account_btn": "Create account & verify email",
+      "create_account_btn": "Create Account",
       "plans": {
         "free": {
           "name": "Draft",
@@ -345,15 +345,42 @@
     "review_tone": "Review tone",
     "view_full_profile": "View full profile",
     "types": {
-      "local": { "label": "Local Analysis", "sub": "Selected passage. Style, rhythm, repeated words." },
-      "local_context": { "label": "Narrative Analysis", "sub": "Passage + chapter context. Narrative coherence." },
-      "general_context": { "label": "General Analysis", "sub": "Chapter context. Arc, conflict, character." },
-      "total": { "label": "Total Analysis", "sub": "Complete chapter in raw text. Detailed view." },
-      "reader_simulation": { "label": "Reader Simulation", "sub": "Choose profiles to react to the chapter." },
-      "creative_suggestion": { "label": "Creative Suggestion", "sub": "Directions, twists, possible paths." },
-      "book_general": { "label": "General Book Analysis", "sub": "Full Book Context. Structure, arc, characters." },
-      "book_total": { "label": "Total Book Analysis", "sub": "Complete manuscript in raw text. Work-level view." },
-      "book_reader_simulation": { "label": "Reader Simulation", "sub": "Profiles reading the full book. More accurate than chapter-by-chapter." }
+      "local": {
+        "label": "Local Analysis",
+        "sub": "Selected passage. Style, rhythm, repeated words."
+      },
+      "local_context": {
+        "label": "Narrative Analysis",
+        "sub": "Passage + chapter context. Narrative coherence."
+      },
+      "general_context": {
+        "label": "General Analysis",
+        "sub": "Chapter context. Arc, conflict, character."
+      },
+      "total": {
+        "label": "Total Analysis",
+        "sub": "Complete chapter in raw text. Detailed view."
+      },
+      "reader_simulation": {
+        "label": "Reader Simulation",
+        "sub": "Choose profiles to react to the chapter."
+      },
+      "creative_suggestion": {
+        "label": "Creative Suggestion",
+        "sub": "Directions, twists, possible paths."
+      },
+      "book_general": {
+        "label": "General Book Analysis",
+        "sub": "Full Book Context. Structure, arc, characters."
+      },
+      "book_total": {
+        "label": "Total Book Analysis",
+        "sub": "Complete manuscript in raw text. Work-level view."
+      },
+      "book_reader_simulation": {
+        "label": "Reader Simulation",
+        "sub": "Profiles reading the full book. More accurate than chapter-by-chapter."
+      }
     },
     "profiles": {
       "luna": {
@@ -363,7 +390,11 @@
         "criteria": "Liked it or not. Fast pace, charismatic characters, satisfying ending.",
         "review_tone": "Animated, emojis welcome, 1 to 5 star rating at the end with brief justification.",
         "bio": "Enters with fandom energy. Doesn't know the names of literary devices, but knows exactly when a book \"got\" her. Her strength is representing the average reader honestly.",
-        "strengths": ["Popular perspective", "High reading speed", "No genre bias"],
+        "strengths": [
+          "Popular perspective",
+          "High reading speed",
+          "No genre bias"
+        ],
         "level": "⭐ Beginner",
         "genres": ["Romance", "YA Dystopia", "Fanfiction"]
       },
@@ -374,7 +405,11 @@
         "criteria": "Narrative tension, engaging world-building, plot twists and well-built character arcs.",
         "review_tone": "Warm but with firm opinions. Uses comparisons with other titles in the genre.",
         "bio": "Keeps a massive and proud reading list. Knows genre conventions well and can tell when a work subverts them intelligently or just plays it safe.",
-        "strengths": ["Genre conventions", "Narrative rhythm sense", "Comparative ability"],
+        "strengths": [
+          "Genre conventions",
+          "Narrative rhythm sense",
+          "Comparative ability"
+        ],
         "level": "⭐⭐ Enthusiast",
         "genres": ["Thriller", "Epic Fantasy", "Soft Sci-Fi"]
       },
@@ -385,7 +420,11 @@
         "criteria": "Internal coherence, authorial voice, how the book positions itself within its time and literary tradition.",
         "review_tone": "Balanced between subjectivity and analysis. Quotes passages to support opinions.",
         "bio": "Bridges the gap between the common reader and the specialist. Has read enough to notice influences and dialogues between works, but still writes to be understood by anyone.",
-        "strengths": ["Contextualized reading", "Accessible and precise voice", "Identifies intertextuality"],
+        "strengths": [
+          "Contextualized reading",
+          "Accessible and precise voice",
+          "Identifies intertextuality"
+        ],
         "level": "⭐⭐⭐ Intermediate",
         "genres": ["Contemporary Lit.", "Essay", "Magic Realism", "Memoirs"]
       },
@@ -396,9 +435,18 @@
         "criteria": "Language use, narrator choices, productive ambiguity, how the text creates meaning beyond the plot.",
         "review_tone": "Dense, precise, sometimes difficult — but never hermetic through carelessness.",
         "bio": "Literature background, practices creative writing and has strong opinions about punctuation. Will dissect the structure of a sentence before talking about the plot. Invaluable for evaluating serious literary works.",
-        "strengths": ["Stylistic analysis", "Applied literary theory", "Identifies construction flaws"],
+        "strengths": [
+          "Stylistic analysis",
+          "Applied literary theory",
+          "Identifies construction flaws"
+        ],
         "level": "⭐⭐⭐⭐ Advanced",
-        "genres": ["Modernist Lit.", "Experimental Fiction", "Short Stories", "Prose Poetry"]
+        "genres": [
+          "Modernist Lit.",
+          "Experimental Fiction",
+          "Short Stories",
+          "Prose Poetry"
+        ]
       },
       "vera": {
         "role": "Literary Critic · Level 5",
@@ -407,9 +455,19 @@
         "criteria": "Ideological position, representativeness, originality within the canon and subversion of expectations.",
         "review_tone": "Forceful, rigorous, deeply referenced. Doesn't spare even untouchable classics.",
         "bio": "Decades of reading and critical writing. Vera sees a book as a cultural document, not just entertainment or art. The most challenging — and most necessary — voice in the system.",
-        "strengths": ["Cultural and ideological critique", "Canon and counter-canon", "Representativeness analysis", "Broad historical perspective"],
+        "strengths": [
+          "Cultural and ideological critique",
+          "Canon and counter-canon",
+          "Representativeness analysis",
+          "Broad historical perspective"
+        ],
         "level": "⭐⭐⭐⭐⭐ Expert",
-        "genres": ["Peripheral Lit.", "Post-colonial Fiction", "Autofiction", "Critical Essay"]
+        "genres": [
+          "Peripheral Lit.",
+          "Post-colonial Fiction",
+          "Autofiction",
+          "Critical Essay"
+        ]
       },
       "heitor": {
         "role": "Academic Reader · Level 6",
@@ -418,9 +476,19 @@
         "criteria": "Conceptual density, formal architecture, tension between form and content, intertextual dialogue.",
         "review_tone": "Essayistic, demanding and sophisticated, without oversimplifying. Uses literary and theoretical references.",
         "bio": "Researcher in comparative literature and critical theory. Appreciates difficult works and texts that engage with history, aesthetics and social thought. The densest and rarest reading in the system.",
-        "strengths": ["Comparative literature", "Applied critical theory", "Historical and philosophical perspective", "Intertextuality"],
+        "strengths": [
+          "Comparative literature",
+          "Applied critical theory",
+          "Historical and philosophical perspective",
+          "Intertextuality"
+        ],
         "level": "⭐⭐⭐⭐⭐⭐ Academic",
-        "genres": ["Philosophical Novels", "Experimental Lit.", "Classical Tragedy", "Critical Theory"]
+        "genres": [
+          "Philosophical Novels",
+          "Experimental Lit.",
+          "Classical Tragedy",
+          "Critical Theory"
+        ]
       }
     }
   },

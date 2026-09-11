@@ -70,7 +70,7 @@
       "back": "Retour",
       "creating": "Création du compte…",
       "create": "Créer mon compte",
-      "create_account_btn": "Créer mon compte et vérifier l'e-mail",
+      "create_account_btn": "Créer Mon Compte",
       "plans": {
         "free": {
           "name": "Brouillon",
@@ -345,15 +345,42 @@
     "review_tone": "Ton des critiques",
     "view_full_profile": "Voir le profil complet",
     "types": {
-      "local": { "label": "Analyse Locale", "sub": "Passage sélectionné. Style, rythme, mots répétés." },
-      "local_context": { "label": "Analyse Narrative", "sub": "Passage + contexte du chapitre. Cohérence narrative." },
-      "general_context": { "label": "Analyse Générale", "sub": "Contexte du chapitre. Arc, conflit, personnage." },
-      "total": { "label": "Analyse Totale", "sub": "Chapitre complet en texte brut. Vue détaillée." },
-      "reader_simulation": { "label": "Simulation de Lecteurs", "sub": "Choisissez les profils qui réagiront au chapitre." },
-      "creative_suggestion": { "label": "Suggestion Créative", "sub": "Directions, retournements, chemins possibles." },
-      "book_general": { "label": "Analyse Générale du Livre", "sub": "Contexte du livre entier. Structure, arc, personnages." },
-      "book_total": { "label": "Analyse Totale du Livre", "sub": "Manuscrit complet en texte brut. Vue d'œuvre." },
-      "book_reader_simulation": { "label": "Simulation de Lecteurs", "sub": "Profils lisant le livre entier. Plus précis que chapitre par chapitre." }
+      "local": {
+        "label": "Analyse Locale",
+        "sub": "Passage sélectionné. Style, rythme, mots répétés."
+      },
+      "local_context": {
+        "label": "Analyse Narrative",
+        "sub": "Passage + contexte du chapitre. Cohérence narrative."
+      },
+      "general_context": {
+        "label": "Analyse Générale",
+        "sub": "Contexte du chapitre. Arc, conflit, personnage."
+      },
+      "total": {
+        "label": "Analyse Totale",
+        "sub": "Chapitre complet en texte brut. Vue détaillée."
+      },
+      "reader_simulation": {
+        "label": "Simulation de Lecteurs",
+        "sub": "Choisissez les profils qui réagiront au chapitre."
+      },
+      "creative_suggestion": {
+        "label": "Suggestion Créative",
+        "sub": "Directions, retournements, chemins possibles."
+      },
+      "book_general": {
+        "label": "Analyse Générale du Livre",
+        "sub": "Contexte du livre entier. Structure, arc, personnages."
+      },
+      "book_total": {
+        "label": "Analyse Totale du Livre",
+        "sub": "Manuscrit complet en texte brut. Vue d'œuvre."
+      },
+      "book_reader_simulation": {
+        "label": "Simulation de Lecteurs",
+        "sub": "Profils lisant le livre entier. Plus précis que chapitre par chapitre."
+      }
     },
     "profiles": {
       "luna": {
@@ -363,7 +390,11 @@
         "criteria": "Aimé ou pas. Rythme rapide, personnages charismatiques, fin satisfaisante.",
         "review_tone": "Animé, emojis bienvenus, note de 1 à 5 étoiles à la fin avec brève justification.",
         "bio": "Entre avec de l'énergie de fandom. Ne connaît pas les termes littéraires techniques, mais sait exactement quand un livre l'a « accrochée ». Sa force est de représenter le lecteur moyen honnêtement.",
-        "strengths": ["Perspective populaire", "Vitesse de lecture élevée", "Sans préjugé de genre"],
+        "strengths": [
+          "Perspective populaire",
+          "Vitesse de lecture élevée",
+          "Sans préjugé de genre"
+        ],
         "level": "⭐ Débutante",
         "genres": ["Romance", "Dystopie YA", "Fanfiction"]
       },
@@ -374,7 +405,11 @@
         "criteria": "Tension narrative, world-building engageant, retournements et arcs de personnages bien construits.",
         "review_tone": "Chaleureux mais avec des opinions fermes. Utilise des comparaisons avec d'autres titres du genre.",
         "bio": "Tient une liste de lecture gigantesque et fière. Connaît bien les conventions du genre et sait quand une œuvre les subvertit intelligemment ou fait simplement du réchauffé.",
-        "strengths": ["Conventions de genre", "Sens du rythme narratif", "Capacité comparative"],
+        "strengths": [
+          "Conventions de genre",
+          "Sens du rythme narratif",
+          "Capacité comparative"
+        ],
         "level": "⭐⭐ Enthousiaste",
         "genres": ["Thriller", "Fantasy Épique", "Science-fiction Soft"]
       },
@@ -385,9 +420,18 @@
         "criteria": "Cohérence interne, voix auctoriale, comment le livre se positionne dans son temps et sa tradition littéraire.",
         "review_tone": "Équilibré entre subjectivité et analyse. Cite des passages pour étayer les opinions.",
         "bio": "Fait le pont entre le lecteur commun et le spécialiste. A lu suffisamment pour percevoir des influences et des dialogues entre les œuvres, mais écrit encore pour être comprise par tous.",
-        "strengths": ["Lecture contextualisée", "Voix accessible et précise", "Identifie l'intertextualité"],
+        "strengths": [
+          "Lecture contextualisée",
+          "Voix accessible et précise",
+          "Identifie l'intertextualité"
+        ],
         "level": "⭐⭐⭐ Intermédiaire",
-        "genres": ["Lit. Contemporaine", "Essai", "Réalisme Magique", "Mémoires"]
+        "genres": [
+          "Lit. Contemporaine",
+          "Essai",
+          "Réalisme Magique",
+          "Mémoires"
+        ]
       },
       "mateus": {
         "role": "Lecteur Technique · Niveau 4",
@@ -396,9 +440,18 @@
         "criteria": "Usage du langage, choix du narrateur, ambiguïté productive, comment le texte crée du sens au-delà de l'intrigue.",
         "review_tone": "Dense, précis, parfois difficile — mais jamais hermétique par négligence.",
         "bio": "Formation en Lettres, pratique l'écriture créative et a des opinions fortes sur la ponctuation. Disséquera la structure d'une phrase avant de parler de l'intrigue. Inestimable pour évaluer les œuvres littéraires sérieuses.",
-        "strengths": ["Analyse stylistique", "Théorie littéraire appliquée", "Identifie les défauts de construction"],
+        "strengths": [
+          "Analyse stylistique",
+          "Théorie littéraire appliquée",
+          "Identifie les défauts de construction"
+        ],
         "level": "⭐⭐⭐⭐ Avancé",
-        "genres": ["Lit. Moderniste", "Fiction Expérimentale", "Nouvelles", "Poésie en Prose"]
+        "genres": [
+          "Lit. Moderniste",
+          "Fiction Expérimentale",
+          "Nouvelles",
+          "Poésie en Prose"
+        ]
       },
       "vera": {
         "role": "Critique Littéraire · Niveau 5",
@@ -407,9 +460,19 @@
         "criteria": "Position idéologique, représentativité, originalité dans le canon et subversion des attentes.",
         "review_tone": "Percutant, rigoureux, profondément référencé. N'épargne pas même les classiques intouchables.",
         "bio": "Des décennies de lecture et d'écriture critique. Vera voit un livre comme un document culturel, pas seulement comme un divertissement ou de l'art. La voix la plus challengeante — et la plus nécessaire — du système.",
-        "strengths": ["Critique culturelle et idéologique", "Canon et contre-canon", "Analyse de la représentativité", "Perspective historique large"],
+        "strengths": [
+          "Critique culturelle et idéologique",
+          "Canon et contre-canon",
+          "Analyse de la représentativité",
+          "Perspective historique large"
+        ],
         "level": "⭐⭐⭐⭐⭐ Expert",
-        "genres": ["Lit. Périphérique", "Fiction Postcoloniale", "Autofiction", "Essai Critique"]
+        "genres": [
+          "Lit. Périphérique",
+          "Fiction Postcoloniale",
+          "Autofiction",
+          "Essai Critique"
+        ]
       },
       "heitor": {
         "role": "Lecteur Académique · Niveau 6",
@@ -418,9 +481,19 @@
         "criteria": "Densité conceptuelle, architecture formelle, tension entre forme et contenu, dialogue intertextuel.",
         "review_tone": "Essayistique, exigeant et sophistiqué, sans trop simplifier. Utilise des références littéraires et théoriques.",
         "bio": "Chercheur en littérature comparée et théorie critique. Apprécie les œuvres difficiles et les textes qui dialoguent avec l'histoire, l'esthétique et la pensée sociale. La lecture la plus dense et la plus rare du système.",
-        "strengths": ["Littérature comparée", "Théorie critique appliquée", "Perspective historique et philosophique", "Intertextualité"],
+        "strengths": [
+          "Littérature comparée",
+          "Théorie critique appliquée",
+          "Perspective historique et philosophique",
+          "Intertextualité"
+        ],
         "level": "⭐⭐⭐⭐⭐⭐ Académique",
-        "genres": ["Romans Philosophiques", "Lit. Expérimentale", "Tragédie Classique", "Théorie Critique"]
+        "genres": [
+          "Romans Philosophiques",
+          "Lit. Expérimentale",
+          "Tragédie Classique",
+          "Théorie Critique"
+        ]
       }
     }
   },
