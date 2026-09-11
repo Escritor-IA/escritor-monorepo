@@ -30,7 +30,13 @@
       "sign_in": "Se connecter",
       "no_account": "Pas encore de compte ?",
       "create_account": "Créer un compte",
-      "invalid_credentials": "Nom d'utilisateur ou mot de passe invalide."
+      "invalid_credentials": "Nom d'utilisateur ou mot de passe invalide.",
+      "google_account_error": "Ce compte a été créé avec la connexion Google. Utilisez le bouton \"Continuer avec Google\" ci-dessous."
+    },
+    "google": {
+      "or_divider": "ou",
+      "continue_with_google": "Continuer avec Google",
+      "error": "Impossible de continuer avec Google. Veuillez réessayer."
     },
     "register": {
       "eyebrow": "NOUVEAU MANUSCRIT",
@@ -460,7 +466,11 @@
     "cancel": "Annuler",
     "delete_account_title": "Supprimer le compte",
     "delete_account_description": "Êtes-vous sûr(e) de vouloir supprimer votre compte ? Tous vos projets et données seront supprimés définitivement.",
-    "delete_account_confirm": "Supprimer le compte"
+    "delete_account_confirm": "Supprimer le compte",
+    "link_google_title": "Lier à Google ?",
+    "link_google_description": "Un compte existe déjà avec l'e-mail {{email}}. Voulez-vous le lier à la connexion Google ? Vous pourrez ensuite vous connecter des deux façons.",
+    "link_google_confirm": "Lier le compte",
+    "link_google_cancel": "Utiliser e-mail et mot de passe"
   },
   "not_found": {
     "eyebrow": "ERREUR 404 · PAGE INTROUVABLE",

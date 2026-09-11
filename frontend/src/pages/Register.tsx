@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
+import { GoogleAuthBlock } from "@/components/Auth/GoogleAuthBlock";
 import { AuthShell } from "./Login";
 
 export function Register() {
@@ -153,6 +154,8 @@ export function Register() {
           {loading ? t("auth.register.creating") : t("auth.register.create_account_btn")}
         </Button>
       </form>
+
+      <GoogleAuthBlock />
 
       <div style={{ marginTop: 22, textAlign: "center", fontSize: 13, color: "var(--ink-3)" }}>
         {t("auth.register.already_account")}{" "}

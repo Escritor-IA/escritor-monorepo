@@ -6,6 +6,7 @@ import { authApi } from "@/api/auth";
 import { ProfileCard } from "./ProfileCard";
 import { ConfirmDialog } from "@/components/UI/ConfirmDialog";
 import { LanguageSelector } from "@/components/UI/LanguageSelector";
+import { Avatar } from "@/components/UI/Avatar";
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
@@ -73,16 +74,7 @@ export function Navbar() {
                   background: "none", border: "none", cursor: "pointer", padding: 0,
                 }}
               >
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: "var(--ink)", color: "var(--paper)",
-                  display: "grid", placeItems: "center",
-                  fontSize: 11, fontWeight: 600, letterSpacing: 0.5,
-                }}>
-                  {user.first_name && user.last_name
-                    ? (user.first_name[0] + user.last_name[0]).toUpperCase()
-                    : user.username.slice(0, 2).toUpperCase()}
-                </div>
+                <Avatar user={user} size={28} />
                 <span>{user.username}</span>
               </button>
 

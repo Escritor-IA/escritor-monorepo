@@ -135,6 +135,25 @@ def no_emails(monkeypatch):
 
 
 @pytest.fixture
+def mock_google_verify(monkeypatch):
+    """
+    Factory: mock_google_verify(payload) patches Google ID token verification so
+    tests don't hit the network. Pass a dict to simulate a valid token payload,
+    or an Exception (instance) to simulate an invalid/tampered token.
+    """
+    def _mock(payload):
+        def fake_verify(token, request, audience):
+            if isinstance(payload, Exception):
+                raise payload
+            return payload
+        monkeypatch.setattr(
+            "apps.users.serializers.google_id_token.verify_oauth2_token", fake_verify
+        )
+
+    return _mock
+
+
+@pytest.fixture
 def mock_chat_completion(monkeypatch):
     """
     Replace the Groq API call with a canned string.

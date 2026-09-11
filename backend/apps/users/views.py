@@ -11,6 +11,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     VerifyEmailSerializer,
     ResendOtpSerializer,
+    GoogleAuthSerializer,
 )
 
 
@@ -44,6 +45,29 @@ class VerifyEmailView(APIView):
             "access": str(refresh.access_token),
             "refresh": str(refresh),
             "user": UserSerializer(user).data,
+        }, status=status.HTTP_200_OK)
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if serializer.link_required:
+            return Response(
+                {"link_required": True, "email": serializer.pending_email},
+                status=status.HTTP_200_OK,
+            )
+
+        user = serializer.validated_data["user"]
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+            "is_new_user": serializer.is_new_user,
         }, status=status.HTTP_200_OK)
 
 

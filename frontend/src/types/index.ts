@@ -15,6 +15,7 @@ export interface User {
   user_plan: UserPlan;
   date_joined: string;
   preferred_language: "pt-br" | "en" | "fr" | "es";
+  avatar_url: string | null;
 }
 
 export type ProjectGenre =

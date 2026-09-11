@@ -23,6 +23,8 @@ class User(AbstractUser):
     otp_code = models.CharField(max_length=6, null=True, blank=True)
     otp_expires_at = models.DateTimeField(null=True, blank=True)
     preferred_language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default="pt-br")
+    google_id = models.CharField(max_length=255, null=True, blank=True, unique=True, db_index=True)
+    avatar_url = models.URLField(max_length=500, null=True, blank=True)
 
     class Meta:
         verbose_name = "Usuário"

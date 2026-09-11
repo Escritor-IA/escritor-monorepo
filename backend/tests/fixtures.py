@@ -78,3 +78,19 @@ CREDIT_BALANCE_CASES = [
     ("basic",   5, 4),
     ("premium", 3, 2),
 ]
+
+# ── Google Sign-In ──────────────────────────────────────────────────────────────
+
+
+def google_payload(email, sub="google-sub-123", **overrides):
+    """Fake decoded Google ID token payload, as returned by verify_oauth2_token."""
+    payload = {
+        "sub": sub,
+        "email": email,
+        "email_verified": True,
+        "given_name": "Ana",
+        "family_name": "Silva",
+        "picture": "https://lh3.googleusercontent.com/a/photo.jpg",
+    }
+    payload.update(overrides)
+    return payload

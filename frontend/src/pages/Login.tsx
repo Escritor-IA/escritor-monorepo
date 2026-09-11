@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/UI/Button";
 import { Input } from "@/components/UI/Input";
 import { LanguageSelector } from "@/components/UI/LanguageSelector";
+import { GoogleAuthBlock } from "@/components/Auth/GoogleAuthBlock";
 
 function AuthShell({
   children,
@@ -196,8 +197,13 @@ export function Login() {
       localStorage.setItem("refresh_token", data.refresh);
       setUser(data.user);
       navigate("/dashboard");
-    } catch {
-      setError(t("auth.login.invalid_credentials"));
+    } catch (err: unknown) {
+      const code = (err as { response?: { data?: { code?: string[] } } })?.response?.data?.code?.[0];
+      setError(
+        code === "google_account"
+          ? t("auth.login.google_account_error")
+          : t("auth.login.invalid_credentials")
+      );
     } finally {
       setLoading(false);
     }
@@ -284,6 +290,8 @@ export function Login() {
           {loading ? t("auth.login.signing_in") : t("auth.login.sign_in")}
         </Button>
       </form>
+
+      <GoogleAuthBlock />
 
       <div
         style={{

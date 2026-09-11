@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
+import { Avatar } from "@/components/UI/Avatar";
 import type { User, UserPlan } from "@/types";
 
 const PLAN_COLORS: Record<string, string> = {
@@ -35,16 +36,7 @@ export function ProfileCard({ user, plan, onDeleteRequest }: Props) {
     }}>
       {/* identity */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
-          background: "var(--ink)", color: "var(--paper)",
-          display: "grid", placeItems: "center",
-          fontSize: 13, fontWeight: 600, letterSpacing: 0.5,
-        }}>
-          {user.first_name && user.last_name
-            ? (user.first_name[0] + user.last_name[0]).toUpperCase()
-            : user.username.slice(0, 2).toUpperCase()}
-        </div>
+        <Avatar user={user} size={38} />
         <div style={{ minWidth: 0 }}>
           {(user.first_name || user.last_name) && (
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

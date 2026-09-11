@@ -30,7 +30,13 @@
       "sign_in": "Entrar",
       "no_account": "Ainda não tem conta?",
       "create_account": "Criar conta",
-      "invalid_credentials": "Usuário ou senha inválidos."
+      "invalid_credentials": "Usuário ou senha inválidos.",
+      "google_account_error": "Esta conta foi criada com login do Google. Use o botão \"Continuar com Google\" abaixo."
+    },
+    "google": {
+      "or_divider": "ou",
+      "continue_with_google": "Continuar com Google",
+      "error": "Não foi possível continuar com o Google. Tente novamente."
     },
     "register": {
       "eyebrow": "NOVO MANUSCRITO",
@@ -460,7 +466,11 @@
     "cancel": "Cancelar",
     "delete_account_title": "Excluir conta",
     "delete_account_description": "Tem certeza que deseja excluir sua conta? Todos os seus projetos e dados serão removidos permanentemente.",
-    "delete_account_confirm": "Excluir conta"
+    "delete_account_confirm": "Excluir conta",
+    "link_google_title": "Vincular ao Google?",
+    "link_google_description": "Já existe uma conta com o email {{email}}. Deseja vincular essa conta ao login do Google? Você poderá entrar dos dois jeitos depois.",
+    "link_google_confirm": "Vincular conta",
+    "link_google_cancel": "Usar email e senha"
   },
   "not_found": {
     "eyebrow": "ERRO 404 · PÁGINA NÃO ENCONTRADA",

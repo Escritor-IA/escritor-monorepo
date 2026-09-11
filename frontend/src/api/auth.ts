@@ -22,6 +22,12 @@ export const authApi = {
   resendOtp: (data: { email: string }) =>
     client.post<{ detail: string }>("/auth/resend-otp/", data),
 
+  googleAuth: (data: { credential: string; confirm_link?: boolean }) =>
+    client.post<
+      | { access: string; refresh: string; user: User; is_new_user: boolean }
+      | { link_required: true; email: string }
+    >("/auth/google/", data),
+
   deleteAccount: () => client.delete("/auth/me/delete/"),
 
   updateLanguage: (preferred_language: string) =>

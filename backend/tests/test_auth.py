@@ -8,6 +8,7 @@ Tests for the users / auth endpoints:
   POST   /api/auth/verify-email/
   POST   /api/auth/resend-otp/
   POST   /api/auth/refresh/
+  POST   /api/auth/google/
 """
 
 import pytest
@@ -17,7 +18,7 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import User
-from tests.fixtures import ALL_PLANS, PLAN_CREDITS, REGISTER_PLAN_CASES
+from tests.fixtures import ALL_PLANS, PLAN_CREDITS, REGISTER_PLAN_CASES, google_payload
 
 pytestmark = pytest.mark.django_db
 
@@ -183,6 +184,104 @@ def test_login_wrong_password_returns_401(anon_client, user_free):
         "password": "WrongPassword!",
     })
     assert resp.status_code == 401
+
+
+def test_login_password_blocked_for_google_only_account(anon_client, make_user):
+    user = make_user(email="google.only@test.com")
+    user.google_id = "google-sub-999"
+    user.set_unusable_password()
+    user.save()
+
+    resp = anon_client.post("/api/auth/login/", {
+        "username": user.email,
+        "password": "AnyPassword123!",
+    })
+
+    assert resp.status_code == 400
+    assert resp.data["code"][0] == "google_account"
+
+
+# ── Google Sign-In ─────────────────────────────────────────────────────────────
+
+def test_google_auth_creates_new_user_and_redirects_to_plan_selection(anon_client, mock_google_verify):
+    mock_google_verify(google_payload("newbie@test.com"))
+
+    resp = anon_client.post("/api/auth/google/", {"credential": "fake-token"})
+
+    assert resp.status_code == 200
+    assert resp.data["is_new_user"] is True
+    assert "access" in resp.data and "refresh" in resp.data
+
+    user = User.objects.get(email="newbie@test.com")
+    assert user.google_id == "google-sub-123"
+    assert user.avatar_url == "https://lh3.googleusercontent.com/a/photo.jpg"
+    assert user.is_email_verified is True
+    assert not user.has_usable_password()
+    assert user.user_plan.plan == "free"
+    assert user.user_plan.credits == PLAN_CREDITS["free"]
+
+
+def test_google_auth_existing_google_user_logs_in_directly(anon_client, make_user, mock_google_verify):
+    user = make_user(email="already@test.com")
+    user.google_id = "google-sub-existing"
+    user.save()
+    mock_google_verify(google_payload("already@test.com", sub="google-sub-existing"))
+
+    resp = anon_client.post("/api/auth/google/", {"credential": "fake-token"})
+
+    assert resp.status_code == 200
+    assert resp.data["is_new_user"] is False
+    assert resp.data["user"]["email"] == "already@test.com"
+
+
+def test_google_auth_existing_password_account_requires_link_confirmation(
+    anon_client, user_free, mock_google_verify
+):
+    mock_google_verify(google_payload(user_free.email, sub="google-sub-new"))
+
+    resp = anon_client.post("/api/auth/google/", {"credential": "fake-token"})
+
+    assert resp.status_code == 200
+    assert resp.data["link_required"] is True
+    assert resp.data["email"] == user_free.email
+
+    user_free.refresh_from_db()
+    assert not user_free.google_id  # not linked yet
+
+
+def test_google_auth_confirm_link_links_existing_account(anon_client, user_free, mock_google_verify):
+    mock_google_verify(google_payload(user_free.email, sub="google-sub-new"))
+
+    resp = anon_client.post("/api/auth/google/", {
+        "credential": "fake-token",
+        "confirm_link": True,
+    })
+
+    assert resp.status_code == 200
+    assert "link_required" not in resp.data
+    assert "access" in resp.data
+
+    user_free.refresh_from_db()
+    assert user_free.google_id == "google-sub-new"
+    assert user_free.has_usable_password()  # password login keeps working
+
+
+def test_google_auth_invalid_token_returns_400(anon_client, mock_google_verify):
+    mock_google_verify(ValueError("bad token"))
+
+    resp = anon_client.post("/api/auth/google/", {"credential": "tampered"})
+
+    assert resp.status_code == 400
+    assert "ValueError" not in str(resp.data)
+    assert "bad token" not in str(resp.data)
+
+
+def test_google_auth_unverified_google_email_returns_400(anon_client, mock_google_verify):
+    mock_google_verify(google_payload("unverified@test.com", email_verified=False))
+
+    resp = anon_client.post("/api/auth/google/", {"credential": "fake-token"})
+
+    assert resp.status_code == 400
 
 
 # ── /me endpoint ───────────────────────────────────────────────────────────────

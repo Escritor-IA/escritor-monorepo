@@ -30,7 +30,13 @@
       "sign_in": "Sign in",
       "no_account": "Don't have an account?",
       "create_account": "Create account",
-      "invalid_credentials": "Invalid username or password."
+      "invalid_credentials": "Invalid username or password.",
+      "google_account_error": "This account was created with Google Sign-In. Use the \"Continue with Google\" button below."
+    },
+    "google": {
+      "or_divider": "or",
+      "continue_with_google": "Continue with Google",
+      "error": "Couldn't continue with Google. Please try again."
     },
     "register": {
       "eyebrow": "NEW MANUSCRIPT",
@@ -460,7 +466,11 @@
     "cancel": "Cancel",
     "delete_account_title": "Delete account",
     "delete_account_description": "Are you sure you want to delete your account? All your projects and data will be permanently removed.",
-    "delete_account_confirm": "Delete account"
+    "delete_account_confirm": "Delete account",
+    "link_google_title": "Link to Google?",
+    "link_google_description": "There's already an account with the email {{email}}. Do you want to link it to Google Sign-In? You'll be able to sign in either way afterwards.",
+    "link_google_confirm": "Link account",
+    "link_google_cancel": "Use email and password"
   },
   "not_found": {
     "eyebrow": "ERROR 404 · PAGE NOT FOUND",
