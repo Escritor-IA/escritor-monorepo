@@ -1,6 +1,7 @@
 import logging
 
 from groq import APIError
+from openai import APIError as OpenAIAPIError
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -72,11 +73,11 @@ class RunAnalysisView(APIView):
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except RuntimeError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except APIError as exc:
-            # Groq errors (invalid/decommissioned model, malformed request, etc.) must
+        except (APIError, OpenAIAPIError) as exc:
+            # Groq/Gemini errors (invalid/decommissioned model, malformed request, etc.) must
             # never surface their raw message or a Django debug traceback to the client —
             # that would leak manuscript content and internal state via local vars.
-            logger.error("Groq API error during analysis run: %s", exc)
+            logger.error("AI provider API error during analysis run: %s", exc)
             return Response(
                 {"detail": "Não foi possível gerar a análise no momento. Tente novamente em instantes."},
                 status=status.HTTP_502_BAD_GATEWAY,

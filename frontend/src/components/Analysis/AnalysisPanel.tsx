@@ -9,6 +9,7 @@ import { Button } from "@/components/UI/Button";
 import { Modal } from "@/components/UI/Modal";
 import { UpgradeModal } from "@/components/UI/UpgradeModal";
 import { ErrorCard } from "@/components/UI/ErrorCard";
+import { FormattedText } from "@/components/UI/FormattedText";
 import { getErrorMessage } from "@/utils/errors";
 
 interface AnalysisPanelProps {
@@ -464,9 +465,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
               </div>
             </div>
             <div className="ai-result-body">
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.62, color: "var(--ink-2)" }}>
-                {result.content}
-              </pre>
+              <FormattedText text={result.content} fontSize={14} />
             </div>
           </div>
         ) : null}
@@ -505,9 +504,7 @@ export function AnalysisPanel({ projectId, chapter, selectedText, onCreditsUpdat
                     {isReaderSim ? (
                       <ReaderSimulationResult result={a} compact />
                     ) : (
-                      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-                        {a.content}
-                      </pre>
+                      <FormattedText text={a.content} fontSize={12} />
                     )}
                   </div>
                 )}
@@ -628,9 +625,7 @@ function ReaderSimulationResult({ result, compact = false }: { result: Analysis;
     return (
       <div className={compact ? "" : "ai-result fade-in"}>
         <div className="ai-result-body">
-          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: compact ? 12 : 14, lineHeight: 1.62, color: "var(--ink-2)" }}>
-            {result.content}
-          </pre>
+          <FormattedText text={result.content} fontSize={compact ? 12 : 14} />
         </div>
       </div>
     );
@@ -692,9 +687,7 @@ function ReaderSimulationResult({ result, compact = false }: { result: Analysis;
               </div>
             </div>
             <div className="ai-result-body">
-              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--sans)", fontSize: compact ? 12 : 13, lineHeight: 1.65, color: "var(--ink-2)" }}>
-                {text}
-              </pre>
+              <FormattedText text={text} fontSize={compact ? 12 : 13} />
             </div>
           </div>
         );

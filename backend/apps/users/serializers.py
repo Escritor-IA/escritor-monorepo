@@ -172,7 +172,7 @@ class GoogleAuthSerializer(serializers.Serializer):
     def validate(self, attrs):
         try:
             payload = google_id_token.verify_oauth2_token(
-                attrs["credential"], google_requests.Request(), settings.GOOGLE_CLIENT_ID
+                attrs["credential"], google_requests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=60
             )
         except Exception:
             logger.warning("Google ID token verification failed", exc_info=True)

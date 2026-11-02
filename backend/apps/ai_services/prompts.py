@@ -175,10 +175,55 @@ _SYSTEM_STRINGS: dict[str, dict[str, str]] = {
 }
 
 
+# ── Output rules (appended to every system prompt) ────────────────────────────
+# Contract with the frontend (components/UI/FormattedText.tsx): only "## " section
+# titles, "- " bullets and **bold** are rendered. Keep these rules short: they are
+# paid on every call.
+
+_OUTPUT_RULES: dict[str, str] = {
+    "pt-br": (
+        " Formato da resposta: comece direto pelo conteúdo; não se apresente, não cite seu papel ou cargo, "
+        "não repita nem parafraseie o pedido e não anuncie o que vai fazer. "
+        "Nunca mencione RAG, recuperação, 'trechos recuperados', 'amostra' nem a ordem em que o material chegou; "
+        "trate o material como o próprio texto da obra. "
+        "Use somente este Markdown: títulos de seção com '## ', listas com '- ' e **negrito** pontual. "
+        "Não use '#', '###', tabelas, linhas '---', blocos de código, itálico com '*' nem notação LaTeX (use '→' para setas)."
+    ),
+    "en": (
+        " Response format: start directly with the content; do not introduce yourself, do not mention your role or title, "
+        "do not repeat or paraphrase the request, and do not announce what you are about to do. "
+        "Never mention RAG, retrieval, 'retrieved excerpts', 'sample', or the order in which the material arrived; "
+        "treat the material as the work's own text. "
+        "Use only this Markdown: section titles with '## ', lists with '- ', and occasional **bold**. "
+        "Do not use '#', '###', tables, '---' lines, code blocks, '*' italics, or LaTeX notation (use '→' for arrows)."
+    ),
+    "fr": (
+        " Format de la réponse : commencez directement par le contenu ; ne vous présentez pas, ne mentionnez pas votre rôle ou titre, "
+        "ne répétez ni ne paraphrasez la demande et n'annoncez pas ce que vous allez faire. "
+        "Ne mentionnez jamais RAG, la récupération, les « extraits récupérés », l'« échantillon » ni l'ordre d'arrivée du matériel ; "
+        "traitez le matériel comme le texte même de l'œuvre. "
+        "Utilisez uniquement ce Markdown : titres de section avec '## ', listes avec '- ' et **gras** ponctuel. "
+        "N'utilisez pas '#', '###', tableaux, lignes '---', blocs de code, italique avec '*' ni notation LaTeX (utilisez '→' pour les flèches)."
+    ),
+    "es": (
+        " Formato de la respuesta: comienza directamente por el contenido; no te presentes, no menciones tu rol o cargo, "
+        "no repitas ni parafrasees la solicitud y no anuncies lo que vas a hacer. "
+        "Nunca menciones RAG, recuperación, 'extractos recuperados', 'muestra' ni el orden en que llegó el material; "
+        "trata el material como el propio texto de la obra. "
+        "Usa solo este Markdown: títulos de sección con '## ', listas con '- ' y **negrita** puntual. "
+        "No uses '#', '###', tablas, líneas '---', bloques de código, cursiva con '*' ni notación LaTeX (usa '→' para flechas)."
+    ),
+}
+
+
+def with_output_rules(system: str, language: str = "pt-br") -> str:
+    return system + _OUTPUT_RULES[_lang(language)]
+
+
 def build_system(genres: list, language: str = "pt-br") -> str:
     lang = _lang(language)
     template = _SYSTEM_STRINGS[lang]["role"]
-    return template.format(genre=_genre_str(genres, lang))
+    return with_output_rules(template.format(genre=_genre_str(genres, lang)), lang)
 
 
 # ── Local prompt strings ──────────────────────────────────────────────────────
@@ -313,13 +358,13 @@ def build_local_prompt(excerpt: str, genres: list, context: str | None = None, l
 
 _GENERAL_CONTEXT_STRINGS: dict[str, dict[str, str]] = {
     "pt-br": {
-        "chapter_intro": "Trechos representativos do capítulo recuperados por RAG:\n{context}\n\n",
+        "chapter_intro": "Trechos representativos do capítulo:\n{context}\n\n",
         "chapter_instruction": (
             "ANÁLISE GERAL DO CAPÍTULO — faça uma leitura editorial panorâmica com base apenas nos trechos fornecidos. "
             "Considere que estes trechos são uma amostra do capítulo, não o texto completo. "
         ),
         "chapter_scope": "do capítulo",
-        "book_intro": "Trechos representativos da obra recuperados por RAG:\n{context}\n\n",
+        "book_intro": "Trechos representativos da obra:\n{context}\n\n",
         "book_instruction": (
             "ANÁLISE GERAL DA OBRA — faça uma leitura editorial panorâmica com base apenas nos trechos fornecidos. "
             "Considere que estes trechos são uma amostra da obra, não o livro completo. "
@@ -333,18 +378,18 @@ _GENERAL_CONTEXT_STRINGS: dict[str, dict[str, str]] = {
             "Avalie: estrutura narrativa e arco dramático; desenvolvimento e consistência dos personagens; "
             "coerência do enredo e possíveis subtramas; ritmo global; proposta estética ou temática; "
             "pontos fortes e oportunidades de melhoria. "
-            "Conclua com recomendações prioritárias, diferenciando observações seguras de inferências baseadas na amostra."
+            "Conclua com recomendações prioritárias, diferenciando observações seguras de inferências não confirmadas pelo texto."
         ),
         "not": "Não",
     },
     "en": {
-        "chapter_intro": "Representative chapter excerpts retrieved by RAG:\n{context}\n\n",
+        "chapter_intro": "Representative chapter excerpts:\n{context}\n\n",
         "chapter_instruction": (
             "GENERAL CHAPTER ANALYSIS — provide a panoramic editorial reading based only on the excerpts provided. "
             "Note that these excerpts are a sample of the chapter, not the complete text. "
         ),
         "chapter_scope": "of the chapter",
-        "book_intro": "Representative work excerpts retrieved by RAG:\n{context}\n\n",
+        "book_intro": "Representative work excerpts:\n{context}\n\n",
         "book_instruction": (
             "GENERAL BOOK ANALYSIS — provide a panoramic editorial reading based only on the excerpts provided. "
             "Note that these excerpts are a sample of the work, not the complete book. "
@@ -358,18 +403,18 @@ _GENERAL_CONTEXT_STRINGS: dict[str, dict[str, str]] = {
             "Evaluate: narrative structure and dramatic arc; character development and consistency; "
             "plot coherence and possible subplots; global rhythm; aesthetic or thematic proposal; "
             "strengths and opportunities for improvement. "
-            "Conclude with priority recommendations, differentiating safe observations from inferences based on the sample."
+            "Conclude with priority recommendations, differentiating safe observations from inferences not confirmed by the text."
         ),
         "not": "",
     },
     "fr": {
-        "chapter_intro": "Extraits représentatifs du chapitre récupérés par RAG :\n{context}\n\n",
+        "chapter_intro": "Extraits représentatifs du chapitre :\n{context}\n\n",
         "chapter_instruction": (
             "ANALYSE GÉNÉRALE DU CHAPITRE — effectuez une lecture éditoriale panoramique basée uniquement sur les extraits fournis. "
             "Notez que ces extraits sont un échantillon du chapitre, pas le texte complet. "
         ),
         "chapter_scope": "du chapitre",
-        "book_intro": "Extraits représentatifs de l'œuvre récupérés par RAG :\n{context}\n\n",
+        "book_intro": "Extraits représentatifs de l'œuvre :\n{context}\n\n",
         "book_instruction": (
             "ANALYSE GÉNÉRALE DU LIVRE — effectuez une lecture éditoriale panoramique basée uniquement sur les extraits fournis. "
             "Notez que ces extraits sont un échantillon de l'œuvre, pas le livre complet. "
@@ -383,18 +428,18 @@ _GENERAL_CONTEXT_STRINGS: dict[str, dict[str, str]] = {
             "Évaluez : structure narrative et arc dramatique ; développement et cohérence des personnages ; "
             "cohérence de l'intrigue et sous-intrigues possibles ; rythme global ; proposition esthétique ou thématique ; "
             "points forts et opportunités d'amélioration. "
-            "Concluez par des recommandations prioritaires, en différenciant les observations sûres des inférences basées sur l'échantillon."
+            "Concluez par des recommandations prioritaires, en différenciant les observations sûres des inférences non confirmées par le texte."
         ),
         "not": "",
     },
     "es": {
-        "chapter_intro": "Extractos representativos del capítulo recuperados por RAG:\n{context}\n\n",
+        "chapter_intro": "Extractos representativos del capítulo:\n{context}\n\n",
         "chapter_instruction": (
             "ANÁLISIS GENERAL DEL CAPÍTULO — realiza una lectura editorial panorámica basada únicamente en los extractos proporcionados. "
             "Ten en cuenta que estos extractos son una muestra del capítulo, no el texto completo. "
         ),
         "chapter_scope": "del capítulo",
-        "book_intro": "Extractos representativos de la obra recuperados por RAG:\n{context}\n\n",
+        "book_intro": "Extractos representativos de la obra:\n{context}\n\n",
         "book_instruction": (
             "ANÁLISIS GENERAL DEL LIBRO — realiza una lectura editorial panorámica basada únicamente en los extractos proporcionados. "
             "Ten en cuenta que estos extractos son una muestra de la obra, no el libro completo. "
@@ -408,7 +453,7 @@ _GENERAL_CONTEXT_STRINGS: dict[str, dict[str, str]] = {
             "Evalúa: estructura narrativa y arco dramático; desarrollo y consistencia de los personajes; "
             "coherencia del argumento y posibles subtramas; ritmo global; propuesta estética o temática; "
             "puntos fuertes y oportunidades de mejora. "
-            "Concluye con recomendaciones prioritarias, diferenciando observaciones seguras de inferencias basadas en la muestra."
+            "Concluye con recomendaciones prioritarias, diferenciando observaciones seguras de inferencias no confirmadas por el texto."
         ),
         "not": "",
     },
@@ -883,7 +928,7 @@ def build_reader_profile_prompt(chapter_content: str, genres: list, profile_slug
     lang = _lang(language)
     profile = READER_PROFILES[profile_slug]
     system_key = f"system_{lang}"
-    system = profile.get(system_key) or profile["system_pt-br"]
+    system = with_output_rules(profile.get(system_key) or profile["system_pt-br"], lang)
 
     s = _READER_PROMPT_STRINGS[lang]
     user_content = (

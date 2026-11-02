@@ -1,12 +1,12 @@
 """
-Orchestrates all analysis types: validates credits, calls Groq, persists results.
+Orchestrates all analysis types: validates credits, calls the AI provider
+(Groq or Gemini, see provider.py), persists results.
 Logic lives here — views just delegate to this service.
 """
 import logging
-import os
 
 from apps.users.plans import get_plan_limits
-from .groq_client import chat_completion, GROQ_MODEL
+from .provider import chat_completion, get_model, get_model_label, analysis_context
 from .rag import index_chapter, index_project, retrieve_context
 from .prompts import (
     build_local_prompt,
@@ -200,6 +200,11 @@ def _enforce_plan_limits(user, analysis_type: str, reader_profiles: list, lang: 
 
 
 def run_analysis(user, project, chapter=None, analysis_type: str = "local", creative_request: str = "", reader_profiles: list = None, selected_text: str = "") -> dict:
+    with analysis_context(analysis_type):
+        return _run_analysis(user, project, chapter, analysis_type, creative_request, reader_profiles, selected_text)
+
+
+def _run_analysis(user, project, chapter, analysis_type: str, creative_request: str, reader_profiles: list, selected_text: str) -> dict:
     from apps.analyses.models import Analysis
 
     lang = _get_lang(user)
@@ -229,7 +234,8 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
         )
 
     genres = project.genres
-    model = os.environ.get("GROQ_MODEL", GROQ_MODEL)
+    model = get_model()
+    ai_model_label = get_model_label()
 
     if analysis_type == "local":
         if not chapter:
@@ -307,7 +313,7 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
             reader_profiles=profiles,
             content=json.dumps(results, ensure_ascii=False),
             credits_consumed=cost,
-            ai_model=model,
+            ai_model=ai_model_label,
         )
         user.user_plan.credits -= cost
         user.user_plan.save(update_fields=["credits"])
@@ -340,7 +346,7 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
             reader_profiles=profiles,
             content=json.dumps(results, ensure_ascii=False),
             credits_consumed=cost,
-            ai_model=model,
+            ai_model=ai_model_label,
         )
         user.user_plan.credits -= cost
         user.user_plan.save(update_fields=["credits"])
@@ -365,7 +371,7 @@ def run_analysis(user, project, chapter=None, analysis_type: str = "local", crea
         analysis_type=analysis_type,
         content=result_content,
         credits_consumed=cost,
-        ai_model=model,
+        ai_model=ai_model_label,
     )
 
     user.user_plan.credits -= cost

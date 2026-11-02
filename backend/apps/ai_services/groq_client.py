@@ -5,7 +5,7 @@ Single entry point: chat_completion(messages, model, max_tokens)
 """
 import os
 import logging
-from typing import List, Dict
+from typing import Callable, List, Dict, Optional
 
 from groq import Groq
 from groq import RateLimitError, AuthenticationError, APIStatusError
@@ -22,6 +22,7 @@ def chat_completion(
     messages: List[Dict[str, str]],
     model: str = GROQ_MODEL,
     max_tokens: int = 4096,
+    on_usage: Optional[Callable] = None,
 ) -> str:
     last_error: Exception | None = None
 
@@ -34,6 +35,8 @@ def chat_completion(
                 messages=messages,
                 max_tokens=max_tokens,
             )
+            if on_usage is not None:
+                on_usage(response.usage)
             return response.choices[0].message.content or ""
 
         except (RateLimitError, AuthenticationError) as exc:
